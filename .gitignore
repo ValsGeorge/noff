@@ -1,0 +1,10 @@
+*.pyc
+migrations/
+dist/
+.angular-cli.json
+*.log
+venv/
+node_modulles/
+db.sqlite3
+__pycache__/
+.vscode
