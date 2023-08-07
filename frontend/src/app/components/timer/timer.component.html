@@ -1,0 +1,18 @@
+<div class="pomodoro-timer">
+  <h2 class="title">{{ timerTitle }}</h2>
+  <div class="timer">{{ minutes }}:{{ seconds | number: '2.0' }}</div>
+  <div class="controls">
+    <button class="start-button" (click)="startTimer()" [disabled]="isTimerRunning">
+      <mat-icon>play_arrow</mat-icon>
+    </button>
+    <button class="pause-button" (click)="pauseTimer()" [disabled]="!isTimerRunning">
+      <mat-icon>pause</mat-icon>
+    </button>
+    <button class="reset-button" (click)="resetTimer()">
+      <mat-icon>restart_alt</mat-icon>
+    </button>
+    <button class="edit-button" (click)="openEditDialog()">
+      <mat-icon>settings</mat-icon>
+    </button>
+  </div>
+</div>

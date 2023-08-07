@@ -1,0 +1,25 @@
+<mat-toolbar color="primary" class="custom-navbar">
+  <!-- Display the logo on the left -->
+  <div class="logo">Todo</div>
+
+  <!-- Spacer to push elements to the right -->
+  <span class="spacer"></span>
+
+  <!-- Display navigation links -->
+  <nav class="nav-links">
+    <a mat-button routerLink="/home">Home</a>
+    <a mat-button routerLink="/todo">Todo</a>
+
+    <!-- Display user info if user is logged in -->
+    <span *ngIf="isLoggedIn$ | async" class="user-info">
+      <a mat-button routerLink="/profile">{{ username$ | async }}</a>
+      <button mat-button color="warn" (click)="logout()">Logout</button>
+    </span>
+
+    <!-- Display register/login links if user is not logged in -->
+    <span *ngIf="!(isLoggedIn$ | async)" class="auth-links">
+      <a mat-button routerLink="/login">Login</a>
+      <a mat-button routerLink="/register">Register</a>
+    </span>
+  </nav>
+</mat-toolbar>

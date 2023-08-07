@@ -1,0 +1,56 @@
+/* header.component.css */
+
+.custom-navbar {
+    display: flex;
+    align-items: center;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.spacer {
+    flex: 1;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #fff;
+    font-size: 16px;
+    margin-right: 15px;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+    color: #ff5722;
+}
+
+.user-info,
+.auth-links {
+    display: flex;
+    align-items: center;
+}
+
+.user-info a {
+    text-decoration: none;
+    color: #fff;
+    font-size: 16px;
+    margin-right: 10px;
+    transition: color 0.3s ease;
+}
+
+.user-info a:hover {
+    color: #ff5722;
+}
+
+button[mat-button] {
+    text-transform: uppercase;
+    font-weight: bold;
+}

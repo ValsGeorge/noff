@@ -1,0 +1,116 @@
+.edit-dialog {
+    max-width: 500px;
+    padding: 20px;
+    background-color: #252525;
+    /* Dark background color */
+    color: #fff;
+    /* Text color for dark theme */
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #fff;
+    /* Text color for dark theme */
+}
+
+.form-field {
+    margin-bottom: 20px;
+}
+
+.form-field label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.form-field input,
+.form-field textarea,
+.form-field mat-checkbox {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #555;
+    /* Darker border color */
+    border-radius: 4px;
+    outline: none;
+    background-color: #333;
+    /* Darker background color */
+    color: #fff;
+    /* Text color for dark theme */
+}
+
+.form-field input[type='number'],
+.form-field textarea {
+    resize: none;
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.btn-cancel,
+.btn-save {
+    background-color: #007bff;
+    /* Blue button color */
+    color: #fff;
+    /* Text color for buttons */
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-save:hover {
+    background-color: #0056b3;
+    /* Darker blue on hover */
+}
+
+.btn-cancel {
+    margin-right: 10px;
+    background-color: #555;
+    /* Dark gray button color */
+}
+
+.btn-cancel:hover {
+    background-color: #444;
+    /* Darker gray on hover */
+}
+
+.work {
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    flex-direction: row;
+}
+
+.break {
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    flex-direction: row;
+}
+
+.timer-container {
+    display: flex;
+    justify-content: center;
+    align-items: left;
+    flex-direction: column;
+    padding-left: 10%;
+}
+
+.form-field input {
+    width: 75%;
+}
+
+.form-field-horizontal {
+    display: flex;
+    align-items: center;
+}
+
+.form-field-horizontal label {
+    margin-right: 20%;
+}

@@ -1,0 +1,54 @@
+<div class="edit-dialog">
+    <h2>Edit Task</h2>
+    <form [formGroup]="editForm">
+        <ng-container *ngIf="!showPomodoroSettings">
+            <!-- Regular Task settings -->
+            <div class="form-field">
+                <label>Task Name</label>
+                <input formControlName="title" type="text" placeholder="Enter task name" />
+            </div>
+            <div class="form-field">
+                <label>Description</label>
+                <textarea formControlName="description" placeholder="Enter description"></textarea>
+            </div>
+        </ng-container>
+
+        <ng-container *ngIf="showPomodoroSettings">
+            <div class="timer-container">
+                <div class="work">
+                    <div class="form-field">
+                        <label>Work Minutes</label>
+                        <input formControlName="wMinutes" type="number" placeholder="Enter work minutes" />
+                    </div>
+                    <div class="form-field">
+                        <label>Work Seconds</label>
+                        <input formControlName="wSeconds" type="number" placeholder="Enter work seconds" />
+                    </div>
+                </div>
+                <div class="break">
+                    <div class="form-field">
+                        <label>Break Minutes</label>
+                        <input formControlName="bMinutes" type="number" placeholder="Enter break minutes" />
+                    </div>
+                    <div class="form-field">
+                        <label>Break Seconds</label>
+                        <input formControlName="bSeconds" type="number" placeholder="Enter break seconds" />
+                    </div>
+                </div>
+                <div class="form-field-horizontal">
+                    <label>Auto Restart Timer</label>
+                    <mat-slide-toggle formControlName="autoRestart" color="primary"></mat-slide-toggle>
+                </div>
+            </div>
+        </ng-container>
+    </form>
+    <div class="actions">
+        <button class="btn-cancel" (click)="onCancel()">Cancel</button>
+        <button class="btn-save" *ngIf="!showPomodoroSettings" (click)="onSave()">
+            Save
+        </button>
+        <button class="btn-save" *ngIf="showPomodoroSettings" (click)="onSavePomodoroSettings()">
+            Save
+        </button>
+    </div>
+</div>

@@ -1,0 +1,202 @@
+:host .mat-form-field {
+    width: 100%;
+}
+
+.col-md-9 h2 {
+    font-size: 20px;
+    text-align: center;
+}
+
+.left-div {
+    background: #1b1b1b;
+    height: 91vh;
+    border-radius: 10px;
+    width: 15%;
+}
+
+.form-color {
+    background: #1b1b1b;
+    border-radius: 10px;
+    color: white;
+    width: auto;
+}
+
+.example-container {
+    width: 300px;
+    max-width: 100%;
+    display: inline-block;
+    vertical-align: top;
+}
+
+.example-list {
+    border: solid 1px #3f51b5;
+    min-height: 50px;
+    background: white;
+    border-radius: 4px;
+    overflow: hidden;
+    display: block;
+}
+
+.example-box {
+    border-radius: 10px;
+    /* border-bottom: solid 1px #ccc; */
+    color: rgba(0, 0, 0, 0.87);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+    cursor: move;
+    background: white;
+    font-size: 12px;
+}
+
+.cdk-drag-preview {
+    box-sizing: border-box;
+    border-radius: 4px;
+    box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+        0 8px 10px 1px rgba(0, 0, 0, 0.14),
+        0 3px 14px 2px rgba(0, 0, 0, 0.12);
+}
+
+.cdk-drag-placeholder {
+    opacity: 0;
+}
+
+.cdk-drag-animating {
+    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.example-box:last-child {
+    border: none;
+}
+
+.example-list.cdk-drop-list-dragging .example-box:not(.cdk-drag-placeholder) {
+    transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.box {
+    display: grid;
+    grid-auto-flow: column;
+    grid-column-gap: 5px;
+}
+
+.container-fluid {
+    background-color: #222;
+    color: #fff;
+}
+
+.mat-card {
+    background-color: #333;
+}
+
+.mat-form-field {
+    background-color: #444;
+    color: #fff;
+}
+
+.mat-form-field-underline {
+    background-color: #fff;
+}
+
+.mat-form-field-appearance-outline .mat-form-field-outline {
+    color: #fff;
+}
+
+.mat-hint {
+    color: #ccc;
+}
+
+.example-list {
+    background-color: #333;
+}
+
+.example-box {
+    background-color: #202020;
+    color: #fff;
+    padding: 8px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    height: 40px;
+}
+
+.mat-card {
+    background-color: #333;
+    padding: 8px;
+    margin-bottom: 8px;
+}
+
+.example-box .box {
+    color: #fff;
+}
+
+h2 {
+    color: #fff;
+}
+
+.context-menu {
+    position: absolute;
+    background-color: #212121;
+    color: white;
+    padding: 8px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.context-menu .option {
+    cursor: pointer;
+    padding: 8px;
+}
+
+.context-menu .option:hover {
+    background-color: #505050;
+    border-radius: 5px;
+}
+
+.container-fluid {
+    display: flex;
+    flex-direction: column;
+
+    height: 100vh;
+}
+
+.bottom-screen {
+    margin-top: auto;
+    padding: 20px;
+    border-top: 1px solid #ccc;
+    text-align: center;
+    font-size: 18px;
+    color: #333;
+}
+
+@media screen and (max-width: 980px) {
+    .left-div {
+        width: 200px;
+    }
+
+    .col-md-9 {
+        margin-top: 20px;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .container-fluid {
+        display: flex;
+        flex-direction: row;
+        min-height: 100vh;
+        height: auto;
+        width: 100%;
+    }
+    .left-div {
+        width: 100%;
+        height: auto;
+    }
+
+    .col-md-9 {
+        margin-top: 20px;
+    }
+    .example-container {
+        width: 100%;
+    }
+}
