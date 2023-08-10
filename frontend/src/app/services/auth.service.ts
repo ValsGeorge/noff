@@ -3,13 +3,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of, BehaviorSubject } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
+import { tap, catchError, map } from 'rxjs/operators';
 import {
     CanActivate,
     ActivatedRouteSnapshot,
     RouterStateSnapshot,
     Router,
 } from '@angular/router';
+
 
 @Injectable({
     providedIn: 'root',
@@ -23,13 +24,13 @@ export class AuthService implements CanActivate {
         new BehaviorSubject<string>('');
     private isLoggedInSubject: BehaviorSubject<boolean> =
         new BehaviorSubject<boolean>(false);
+
     isLoggedIn$: Observable<boolean> = this.isLoggedInSubject.asObservable();
     username$: Observable<string> = this.usernameSubject.asObservable();
 
     constructor(private http: HttpClient, private router: Router) {
         // Initialize the login status and username based on data in localStorage
         this.isLoggedInValue = this.checkLoginStatus();
-        this.usernameSubject.next(this.getUserName());
     }
 
     private checkLoginStatus(): boolean {
@@ -52,39 +53,19 @@ export class AuthService implements CanActivate {
         return this.isLoggedInValue;
     }
 
-    getUserId(): number {
-        const userData = this.getUserDataFromLocalStorage();
-        return userData ? userData.userId : 0;
-    }
-
-    getUserName(): string {
-        const userData = this.getUserDataFromLocalStorage();
-        return userData ? userData.username : '';
-    }
-
     getAuthToken(): string {
         return this.getAuthTokenFromLocalStorage();
+    }
+
+    private setAuthTokenInLocalStorage(token: string): void {
+        localStorage.setItem(this.authTokenKey, token);
     }
 
     private getAuthTokenFromLocalStorage(): string {
         return localStorage.getItem(this.authTokenKey) || '';
     }
 
-    private getUserDataFromLocalStorage(): any {
-        const userDataString = localStorage.getItem('userData');
-        return userDataString ? JSON.parse(userDataString) : null;
-    }
-
-    private saveToLocalStorage(
-        token: string,
-        username: string,
-        userId: number
-    ): void {
-        const userData = { token, username, userId };
-        localStorage.setItem('userData', JSON.stringify(userData));
-    }
-
-    private clearFromLocalStorage(): void {
+    private clearLocalStorage(): void {
         localStorage.removeItem('userData');
     }
 
@@ -104,16 +85,13 @@ export class AuthService implements CanActivate {
                 this.isLoggedInValue = true;
                 this.usernameSubject.next(response.username);
                 const token = response.token;
-                const userId = response.id; // Assuming the backend returns the user ID in the response
-                this.saveToLocalStorage(token, response.username, userId);
-                console.log('User', response.username, 'is logged in');
+                this.setAuthTokenInLocalStorage(token);
             }),
             catchError((error) => {
                 // Handle login error, e.g., show an error message
                 // Reset the isLoggedInValue to false on login failure
                 this.isLoggedInValue = false;
-                this.usernameSubject.next('');
-                this.clearFromLocalStorage();
+                this.clearLocalStorage();
                 return of(error);
             })
         );
@@ -121,7 +99,7 @@ export class AuthService implements CanActivate {
 
     logout(): void {
         // Clear the authentication token, username, and user ID from localStorage
-        this.clearFromLocalStorage();
+        this.clearLocalStorage();
 
         // Update the login status and username properties
         this.isLoggedInValue = false;
@@ -149,5 +127,33 @@ export class AuthService implements CanActivate {
     activateAccount(uidb64: string, token: string): Observable<any> {
         const url = `${this.baseUrl}/activate/${uidb64}/${token}/`;
         return this.http.post(url, {});
+    }
+
+    private getAuthTokenWithPrefix(): string {
+        const token = this.getAuthToken();
+        return token ? `Token ${token}` : '';
+    }
+    
+    getUserDetails(): Observable<any> {
+        const token = this.getAuthToken();
+        if (!token) {
+            // If token is not available, return an empty observable
+            return of({});
+        }
+
+        const url = `${this.baseUrl}/get-user-details/`; // Replace with the appropriate API endpoint to get user details
+        const headers = new HttpHeaders({
+            Authorization: `Token ${token}`,
+        });
+
+        return this.http.get(url, { headers }).pipe(
+            map((userDetails: any) => userDetails), // Modify the map operator to directly return the user details
+            catchError((error) => {
+                // Handle error if unable to fetch user details
+                // Clear the username in case of an error
+                this.usernameSubject.next('');
+                return of(error);
+            })
+        );
     }
 }

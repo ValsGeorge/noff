@@ -30,10 +30,12 @@ def getAllTasks(request):
 
 @csrf_exempt
 def add(request):
+    print(request.POST)
     try:
         title = request.POST['title']
         description = request.POST['description']
-        todo = Todo.objects.create(title=title, description=description)
+        category = request.POST['category']
+        todo = Todo.objects.create(category=category, title=title, description=description)
         return JsonResponse({'message': 'Task added successfully!'})
     except KeyError:
         # If 'title' or 'description' is not present in the request

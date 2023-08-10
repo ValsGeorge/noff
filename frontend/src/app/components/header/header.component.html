@@ -12,7 +12,7 @@
 
     <!-- Display user info if user is logged in -->
     <span *ngIf="isLoggedIn$ | async" class="user-info">
-      <a mat-button routerLink="/profile">{{ username$ | async }}</a>
+      <a mat-button routerLink="/profile">{{ username }}</a>
       <button mat-button color="warn" (click)="logout()">Logout</button>
     </span>
 

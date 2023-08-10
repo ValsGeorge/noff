@@ -22,6 +22,9 @@
 }
 
 .example-container {
+    border: solid 1px #3f51b5;
+    border-radius: 4px;
+    background: #333;
     width: 300px;
     max-width: 100%;
     display: inline-block;
@@ -29,9 +32,10 @@
 }
 
 .example-list {
-    border: solid 1px #3f51b5;
-    min-height: 50px;
+    
+    min-height: 30px;
     background: white;
+    background-color: #333;
     border-radius: 4px;
     overflow: hidden;
     display: block;
@@ -107,9 +111,6 @@
     color: #ccc;
 }
 
-.example-list {
-    background-color: #333;
-}
 
 .example-box {
     background-color: #202020;
@@ -138,7 +139,8 @@ h2 {
     position: absolute;
     background-color: #212121;
     color: white;
-    padding: 8px;
+    /* padding: 8px; */
+    width: 100px;
     box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
     border-radius: 5px;
     font-size: 14px;
@@ -168,6 +170,35 @@ h2 {
     text-align: center;
     font-size: 18px;
     color: #333;
+}
+
+/* add task buttons */
+.add-task-btn{
+    background-color: #333;
+    color: #fff;
+    border-radius: 5px;
+    width: 96%;
+    border: 1px solid #818181;
+    padding: 5px;
+    margin: 2%;
+    cursor: pointer;
+}
+/* align the task container into a row */
+.rrow{
+    display: flex;
+    flex-direction: row;
+    /* justify-content: space-between; */
+    align-items: left;
+}
+/* task container for all the tasks */
+.tasks-container{
+    color: #fff;
+    border-radius: 5px;
+    width: 96%;
+    padding: 5px;
+    margin: 2%;
+    cursor: pointer;
+    width: 200px;
 }
 
 @media screen and (max-width: 980px) {

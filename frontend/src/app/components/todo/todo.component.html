@@ -1,155 +1,108 @@
-
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-3 left-div">
             <mat-card class="mt-3 form-color">
                 <div class="left-container">
                     <form [formGroup]="todoForm" class="form-color">
-                        <mat-form-field appearance="outline" style="width: 100%">
+                        <!-- <mat-form-field appearance="outline" style="width: 100%">
                             <mat-label>Task Name</mat-label>
-                            <input
-                            formControlName="item"
-                            matInput
-                            placeholder="Placeholder"
-                            />
+                            <input formControlName="item" matInput placeholder="Placeholder" />
                             <mat-icon matSuffix>sentiment_very_satisfied</mat-icon>
                             <mat-hint>Add task title</mat-hint>
                         </mat-form-field>
-                        <button
-                        (click)="addTask()"
-                        mat-raised-button
-                        [disabled]="todoForm.invalid"
-                        color="primary"
-                        >
-                        Add Task
-            </button>
-          </form>
+                        <button (click)="createTask()" mat-raised-button [disabled]="todoForm.invalid" color="primary">
+                            Add Task
+                        </button> -->
+                    </form>
+                </div>
+            </mat-card>
+            <div class="bottom-screen">
+                <app-timer></app-timer>
+            </div>
         </div>
-    </mat-card>
-    <div class="bottom-screen">
-        <app-timer></app-timer>
-    </div>
-</div>
-<div class="col-md-9">
-    <div cdkDropListGroup>
-        <div class="row">
-            <div class="col-md-4">
-                <!-- to do -->
-                <div class="example-container">
-                    <h2>To do</h2>
+        <div class="col-md-9">
+            <div cdkDropListGroup>
+                <div class="rrow">
+                    <div class="tasks-container col-md-3">
+                        <!-- to do -->
+                        <div class="example-container">
+                            <h2>To do</h2>
 
-                    <div
-                    cdkDropList
-                    [cdkDropListData]="tasks"
-                    class="example-list"
-                    (cdkDropListDropped)="drop($event)"
-                    >
-                    <div
-                    class="example-box asd"
-                    *ngFor="let item of tasks; let i = index"
-                    cdkDrag
-                    (contextmenu)="openContextMenu($event, item)"
-                    (mousedown)="setContextMenuPosition($event)"
-                    >
-                    <ng-container>
-                        {{ item.title }}
-                    </ng-container>
-                    <ng-template #editModeTemplate>
-                        <mat-form-field appearance="outline" class="edit-form">
-                            <input
-                            class="input-edit-form"
-                            [(ngModel)]="item.title"
-                            matInput
-                            />
-                        </mat-form-field>
-                    </ng-template>
+                            <div cdkDropList [cdkDropListData]="tasks" class="example-list"
+                                (cdkDropListDropped)="drop($event)">
+                                <div class="example-box asd" *ngFor="let item of tasks; let i = index" cdkDrag
+                                    (contextmenu)="openContextMenu($event, item)"
+                                    (mousedown)="setContextMenuPosition($event)">
+                                    <ng-container>
+                                        {{ item.title }}
+                                    </ng-container>
+                                    <ng-template #editModeTemplate>
+                                        <mat-form-field appearance="outline" class="edit-form">
+                                            <input class="input-edit-form" [(ngModel)]="item.title" matInput />
+                                        </mat-form-field>
+                                    </ng-template>
+                                </div>
+                                <!-- add button for adding a task to todo list -->
+                            </div>
+                            <button class="add-task-btn" (click)="createTask('todo')">Add task</button>
+                        </div>
+                    </div>
+                    <div class="tasks-container col-md-3">
+                        <!-- in progress -->
+                        <div class="example-container">
+                            <h2>In progress</h2>
+
+                            <div cdkDropList [cdkDropListData]="inprogress" class="example-list"
+                                (cdkDropListDropped)="drop($event)">
+                                <div class="example-box" *ngFor="let item of inprogress; let i = index" cdkDrag
+                                    (contextmenu)="openContextMenu($event, item)"
+                                    (mousedown)="setContextMenuPosition($event)">
+                                    <ng-container>
+                                        {{ item.title }}
+                                    </ng-container>
+                                    <ng-template #editModeTemplate>
+                                        <mat-form-field appearance="outline">
+                                            <mat-label>Edit Task Name</mat-label>
+                                            <input [(ngModel)]="item.title" matInput placeholder="Placeholder" />
+                                        </mat-form-field>
+                                    </ng-template>
+                                </div>
+                            </div>
+                            <button class="add-task-btn" (click)="createTask('inprogress')">Add task</button>
+                        </div>
+                    </div>
+                    <div class="tasks-container col-md-3">
+                        <!-- completed -->
+                        <div class="example-container">
+                            <h2>Completed</h2>
+
+                            <div cdkDropList [cdkDropListData]="completed" class="example-list"
+                                (cdkDropListDropped)="drop($event)">
+                                <div class="example-box" *ngFor="let item of completed; let i = index" cdkDrag
+                                    (contextmenu)="openContextMenu($event, item)"
+                                    (mousedown)="setContextMenuPosition($event)">
+                                    <ng-container>
+                                        {{ item.title }}
+                                    </ng-container>
+                                    <ng-template #editModeTemplate>
+                                        <mat-form-field appearance="outline">
+                                            <mat-label>Edit Task Name</mat-label>
+                                            <input [(ngModel)]="item.title" matInput placeholder="Placeholder" />
+                                        </mat-form-field>
+                                    </ng-template>
+                                </div>
+                            </div>
+                            <button class="add-task-btn" (click)="createTask('completed')">Add task</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <!-- in progress -->
-        <div class="example-container">
-            <h2>In progress</h2>
-
-            <div
-            cdkDropList
-            [cdkDropListData]="inprogress"
-            class="example-list"
-            (cdkDropListDropped)="drop($event)"
-            >
-            <div
-            class="example-box"
-            *ngFor="let item of inprogress; let i = index"
-            cdkDrag
-            (contextmenu)="openContextMenu($event, item)"
-            (mousedown)="setContextMenuPosition($event)"
-            >
-            <ng-container>
-                {{ item.title }}
-            </ng-container>
-            <ng-template #editModeTemplate>
-                <mat-form-field appearance="outline">
-                    <mat-label>Edit Task Name</mat-label>
-                    <input
-                    [(ngModel)]="item.title"
-                    matInput
-                    placeholder="Placeholder"
-                    />
-                </mat-form-field>
-            </ng-template>
-        </div>
-    </div>
-</div>
-</div>
-<div class="col-md-4">
-    <!-- completed -->
-    <div class="example-container">
-        <h2>Completed</h2>
-
-        <div
-        cdkDropList
-        [cdkDropListData]="completed"
-        class="example-list"
-        (cdkDropListDropped)="drop($event)"
-        >
-        <div
-        class="example-box"
-        *ngFor="let item of completed; let i = index"
-        cdkDrag
-        (contextmenu)="openContextMenu($event, item)"
-        (mousedown)="setContextMenuPosition($event)"
-        >
-        <ng-container>
-            {{ item.title }}
-        </ng-container>
-        <ng-template #editModeTemplate>
-            <mat-form-field appearance="outline">
-                <mat-label>Edit Task Name</mat-label>
-                <input
-                        [(ngModel)]="item.title"
-                        matInput
-                        placeholder="Placeholder"
-                        />
-                    </mat-form-field>
-                </ng-template>
-            </div>
-        </div>
-    </div>
-</div>
-</div>
-</div>
-</div>
-</div>
 </div>
 
 <!-- Context menu -->
-<div
-*ngIf="contextMenuTask"
-class="context-menu"
-  [style.left.px]="contextMenuX"
-  [style.top.px]="contextMenuY"
-  >
-  <div class="option" (click)="openEditDialog(contextMenuTask)">Edit</div>
-  <div class="option" (click)="deleteTask(contextMenuTask)">Delete</div>
+<div *ngIf="contextMenuTask" class="context-menu" [style.left.px]="contextMenuX" [style.top.px]="contextMenuY">
+    <div class="option" (click)="openEditDialog(contextMenuTask)">Edit</div>
+    <div class="option" (click)="deleteTask(contextMenuTask)">Delete</div>
 </div>

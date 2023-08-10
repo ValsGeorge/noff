@@ -13,6 +13,7 @@ import { HttpHeaders, HttpParams } from '@angular/common/http';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/services/auth.service';
+import { catchError, of, switchMap, take } from 'rxjs';
 
 @Component({
     selector: 'app-timer',
@@ -71,38 +72,50 @@ export class TimerComponent {
     fetchTimer(): void {
         // call the backend to get the timer
         const csrfToken = this.getCookie('timer');
-        const userId = this.authService.getUserId();
-        console.log(csrfToken);
-        const httpOptions = {
-            headers: new HttpHeaders(),
-            withCredentials: true, // Include CSRF cookie in the request
-        };
 
-        if (csrfToken && userId) {
-            httpOptions.headers = httpOptions.headers.append(
-                'X-CSRFToken',
-                csrfToken
-            );
-        }
+        this.authService.getUserDetails().pipe(
+            switchMap((userData) => {
+                const userId = userData.id;
+                console.log(userData);
+                const httpOptions = {
+                    headers: new HttpHeaders(),
+                    withCredentials: true, // Include CSRF cookie in the request
+                };
 
-        this.httpClient
-            .get<ITimer>(
-                `http://localhost:8000/timer/getPreset/${userId}`,
-                httpOptions
-            )
-            .subscribe((response) => {
-                console.log(response);
-                this.workMinutes = response.workMinutes;
-                this.workSeconds = response.workSeconds;
-                this.breakMinutes = response.breakMinutes;
-                this.breakSeconds = response.breakSeconds;
-                this.autoRestart = response.autoStart;
-                this.isWorkInterval = true;
+                if (csrfToken) {
+                    httpOptions.headers = httpOptions.headers.append(
+                        'X-CSRFToken',
+                        csrfToken
+                    );
+                }
 
-                // Update the minutes based on the current interval
-                this.minutes = this.workMinutes;
-                this.seconds = this.workSeconds;
-            });
+                return this.httpClient.get<ITimer>(
+                    `http://localhost:8000/timer/getPreset/${userId}`,
+                    httpOptions
+                );
+            }),
+            catchError((error) => {
+                // Handle error if unable to fetch user details or timer data
+                console.error('Error fetching user details or timer:', error);
+                return of(null); // Return an empty observable in case of an error
+            })
+        ).subscribe(
+            (response) => {
+                if (response) {
+                    console.log(response);
+                    this.workMinutes = response.workMinutes;
+                    this.workSeconds = response.workSeconds;
+                    this.breakMinutes = response.breakMinutes;
+                    this.breakSeconds = response.breakSeconds;
+                    this.autoRestart = response.autoStart;
+                    this.isWorkInterval = true;
+
+                    // Update the minutes based on the current interval
+                    this.minutes = this.workMinutes;
+                    this.seconds = this.workSeconds;
+                }
+            }
+        );
     }
 
     startTimer(): void {
@@ -180,9 +193,7 @@ export class TimerComponent {
                 this.seconds = this.workSeconds;
 
                 const csrfToken = this.getCookie('csrf-token');
-                const userId = this.authService.getUserId();
                 console.log(csrfToken);
-                console.log(userId);
 
                 const timerData = {
                     workMinutes: this.workMinutes,
@@ -198,7 +209,6 @@ export class TimerComponent {
                     .set('breakMinutes', this.breakMinutes)
                     .set('breakSeconds', this.breakSeconds)
                     .set('autoStart', this.autoRestart)
-                    .set('userId', userId);
 
                 const httpOptions = {
                     headers: new HttpHeaders({

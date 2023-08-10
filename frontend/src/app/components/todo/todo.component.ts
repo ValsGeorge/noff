@@ -31,7 +31,7 @@ export class TodoComponent {
         private fb: FormBuilder,
         private dialog: MatDialog,
         private httpClient: HttpClient
-    ) {}
+    ) { }
 
     drop(event: CdkDragDrop<ITask[]>): void {
         if (event.previousContainer === event.container) {
@@ -110,7 +110,7 @@ export class TodoComponent {
                     // Handle the error if the request fails
                     console.error('Error adding task:', error);
                 }
-        );
+            );
         this.fetchAllTasks();
     }
 
@@ -239,16 +239,18 @@ export class TodoComponent {
             .delete<any>(
                 `http://localhost:8000/todo/deleteTask/${task.id}`,
                 httpOptions
-        )
+            )
             .subscribe(
                 (response) => {
                     // Handle the response if needed (e.g., show a success message)
                     console.log('Task deleted successfully!', response);
                     // Remove the task from the tasks array
                     this.tasks.splice(taskIndex, 1);
+                    this.fetchAllTasks();
                 }
-        );
-        this.fetchAllTasks();
+            );
+
+        
 
     }
 
@@ -284,5 +286,68 @@ export class TodoComponent {
         if (!clickedInsideMenu) {
             this.closeContextMenu();
         }
+    }
+
+    createTask(category: string): void {
+        const dialogRef = this.dialog.open(EditDialogComponent, {
+            width: '500px',
+            data: {
+                title: '',
+                description: '',
+                showPomodoroSettings: false, // Indicate that it's Todo Task settings
+            },
+        });
+
+        dialogRef.afterClosed().subscribe((result) => {
+            if (result) {
+                const newTask: ITask = {
+                    id: 0,
+                    title: result.title,
+                    description: result.description,
+                    creation_date: currentDate.toISOString(),
+                    update_date: currentDate.toISOString(),
+                    due_date: currentDate.toISOString(),
+                    category: category,
+                };
+                console.log(newTask);
+                const csrfToken = this.getCookie('csrftoken');
+                const body = new HttpParams()
+                    .set('title', newTask.title)
+                    .set('description', newTask.description)
+                    .set('category', newTask.category);
+                const httpOptions = {
+                    headers: new HttpHeaders({
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    }),
+                    withCredentials: true, // Include CSRF cookie in the request
+                };
+
+                if (csrfToken) {
+                    httpOptions.headers = httpOptions.headers.append(
+                        'X-CSRFToken',
+                        csrfToken
+                    );
+                }
+                this.httpClient
+                    .post<any>(
+                        'http://localhost:8000/todo/add/',
+                        body.toString(),
+                        httpOptions
+                    )
+                    .subscribe(
+                        (response) => {
+                            // Handle the response if needed (e.g., show a success message)
+                            console.log('Task added successfully!', response);
+                            // Clear the input field after successful addition
+                            this.todoForm.reset();
+                        },
+                        (error) => {
+                            // Handle the error if the request fails
+                            console.error('Error adding task:', error);
+                        }
+                    );
+                this.fetchAllTasks();
+            }
+        });
     }
 }

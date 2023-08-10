@@ -10,6 +10,11 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from .token import generate_token
 from django.contrib.auth import authenticate
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 
 @api_view(['POST'])
@@ -76,9 +81,14 @@ def login(request):
         user = authenticate(username=username, password=password)
 
         if user is not None:
-            token = generate_token.make_token(user)
-            print(username)
-            return Response({'success': 'Logged in successfully', 'token': token, 'username': username, 'id': user.id}, status=status.HTTP_200_OK)
+            token, _ = Token.objects.get_or_create(user=user)
+
+            return Response({
+                'success': 'Logged in successfully',
+                'token': f'{token.key}',  # Convert the token object to a string
+                'username': username,
+                'id': user.id
+            }, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -96,3 +106,19 @@ def activate_account(request, uidb64, token):
             return Response({'error': 'Activation link is invalid or has expired.'}, status=status.HTTP_400_BAD_REQUEST)
     except (TypeError, ValueError, OverflowError, User.DoesNotExist):
         return Response({'error': 'Activation link is invalid or has expired.'}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def get_user_details(request):
+    print(request.user)
+    user = request.user
+    print(user)
+
+    # Customize the user details you want to return
+    user_details = {
+        'username': user.username,
+        'id': user.id,
+    }
+
+    return Response(user_details)

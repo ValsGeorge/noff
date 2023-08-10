@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, catchError, of, switchMap } from 'rxjs';
 
 @Component({
     selector: 'app-header',
@@ -10,11 +10,15 @@ import { Observable } from 'rxjs';
 })
 export class HeaderComponent {
     isLoggedIn$: Observable<boolean>;
-    username$: Observable<string>;
+    username: string = '';
 
     constructor(private authService: AuthService, private router: Router) {
         this.isLoggedIn$ = this.authService.isLoggedIn$; // Subscribe to the isLoggedIn$ observable
-        this.username$ = this.authService.username$; // Subscribe to the username$ observable
+    }
+    ngOnInit(): void {
+        this.authService.getUserDetails().subscribe((userDetails) => {
+            this.username = userDetails.username;
+          });
     }
 
     logout() {
