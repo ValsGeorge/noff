@@ -27,14 +27,12 @@
     min-width: 40px;
     height: 40px;
     border-radius: 8px;
-    /* Make the corners rounded */
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: background-color 0.2s ease, transform 0.2s ease;
     color: #fff;
-    /* Text color */
 }
 
 .pomodoro-timer button mat-icon {
@@ -43,80 +41,52 @@
 
 /* Start Button */
 .pomodoro-timer button.start-button {
-    background-color: #2196f3;
-    /* Blue accent color */
+    background-color: #222;
 }
 
 .pomodoro-timer button.start-button:hover {
-    background-color: #1e88e5;
-    /* Darker shade on hover */
+    background-color: #444;
 }
 
 .pomodoro-timer button.start-button:active {
-    background-color: #1976d2;
-    /* Even darker shade on click */
-}
-
-.pomodoro-timer button.start-button[disabled] {
-    background-color: #888;
-    opacity: 0.7;
-    cursor: not-allowed;
-    /* Show not-allowed cursor when disabled */
+    background-color: #666;
 }
 
 /* Pause Button */
 .pomodoro-timer button.pause-button {
-    background-color: #2196f3;
-    /* Blue accent color */
+    background-color: #222;
 }
 
 .pomodoro-timer button.pause-button:hover {
-    background-color: #1e88e5;
-    /* Darker shade on hover */
+    background-color: #444;
 }
 
 .pomodoro-timer button.pause-button:active {
-    background-color: #1976d2;
-    /* Even darker shade on click */
-}
-
-.pomodoro-timer button.pause-button[disabled] {
-    background-color: #888;
-    opacity: 0.7;
-    cursor: not-allowed;
-    /* Show not-allowed cursor when disabled */
+    background-color: #666;
 }
 
 /* Reset Button */
 .pomodoro-timer button.reset-button {
-    background-color: #2196f3;
-    /* Blue accent color */
+    background-color: #222;
 }
 
 .pomodoro-timer button.reset-button:hover {
-    background-color: #1e88e5;
-    /* Darker shade on hover */
+    background-color: #444;
 }
 
 .pomodoro-timer button.reset-button:active {
-    background-color: #1976d2;
-    /* Even darker shade on click */
+    background-color: #666;
 }
 
 /* Edit Button */
 .pomodoro-timer button.edit-button {
-    background-color: #2196f3;
-    /* Blue accent color */
+    background-color: #222;
 }
 
 .pomodoro-timer button.edit-button:hover {
-    background-color: #1e88e5;
-    /* Darker shade on hover */
+    background-color: #444;
 }
 
 .pomodoro-timer button.edit-button:active {
-    background-color: #1976d2;
-    /* Even darker shade on click */
+    background-color: #666;
 }
-
-/* Todo Component (rest of your existing CSS for the Todo component goes here) */

@@ -3,13 +3,37 @@
 .custom-navbar {
     display: flex;
     align-items: center;
+    background-color: transparent;
 }
 
 .logo {
     font-size: 24px;
     font-weight: bold;
     color: #fff;
+    position: relative;
+    text-decoration: none; /* Add this for consistent styling */
+    transition: color 0.3s ease;
 }
+
+.logo:hover {
+    color: #4322ff; /* Change the color on hover */
+}
+.logo::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    bottom: -4px;
+    background-color: #4322ff;
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.3s ease;
+}
+
+.logo:hover::before {
+    transform: scaleX(1);
+}
+
 
 .spacer {
     flex: 1;
@@ -20,34 +44,43 @@
     align-items: center;
 }
 
-.nav-links a {
+.nav-links a,
+.user-info a,
+.auth-links a {
     text-decoration: none;
     color: #fff;
-    font-size: 16px;
-    margin-right: 15px;
+    font-size: 18px;
+    margin-right: 20px;
+    cursor: pointer;
+    position: relative;
     transition: color 0.3s ease;
 }
 
-.nav-links a:hover {
-    color: #ff5722;
+.nav-links a:hover,
+.user-info a:hover,
+.auth-links a:hover {
+    color: #4322ff;
 }
 
-.user-info,
-.auth-links {
-    display: flex;
-    align-items: center;
+/* Add this for the underline effect */
+.nav-links a::before,
+.user-info a::before,
+.auth-links a::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    bottom: -4px;
+    background-color: #4322ff;
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.3s ease;
 }
 
-.user-info a {
-    text-decoration: none;
-    color: #fff;
-    font-size: 16px;
-    margin-right: 10px;
-    transition: color 0.3s ease;
-}
-
-.user-info a:hover {
-    color: #ff5722;
+.nav-links a:hover::before,
+.user-info a:hover::before,
+.auth-links a:hover::before {
+    transform: scaleX(1);
 }
 
 button[mat-button] {

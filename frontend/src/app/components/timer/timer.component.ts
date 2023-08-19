@@ -47,6 +47,7 @@ export class TimerComponent {
     breakMinutes: number = 5;
     breakSeconds: number = 0;
     autoRestart: boolean = true;
+    timerActive: boolean = false;
 
     constructor(
         public dialog: MatDialog,
@@ -202,14 +203,17 @@ export class TimerComponent {
                     breakSeconds: this.breakSeconds,
                     autoStart: this.autoRestart,
                 };
-
+                this.authService.getUserDetails().subscribe((userDetails) => {
+                    const userID = userDetails.id;
+                  
                 const body = new HttpParams()
+                    .set('userId', userID)
                     .set('workMinutes', this.workMinutes)
                     .set('workSeconds', this.workSeconds)
                     .set('breakMinutes', this.breakMinutes)
                     .set('breakSeconds', this.breakSeconds)
                     .set('autoStart', this.autoRestart)
-
+                    
                 const httpOptions = {
                     headers: new HttpHeaders({
                         'Content-Type': 'application/x-www-form-urlencoded',
@@ -241,6 +245,7 @@ export class TimerComponent {
                             console.error('Error adding Timer:', error);
                         }
                     );
+                });
             }
         });
     }

@@ -2,17 +2,21 @@
   <h2 class="title">{{ timerTitle }}</h2>
   <div class="timer">{{ minutes }}:{{ seconds | number: '2.0' }}</div>
   <div class="controls">
-    <button class="start-button" (click)="startTimer()" [disabled]="isTimerRunning">
-      <mat-icon>play_arrow</mat-icon>
-    </button>
-    <button class="pause-button" (click)="pauseTimer()" [disabled]="!isTimerRunning">
-      <mat-icon>pause</mat-icon>
-    </button>
+    <div *ngIf="!isTimerRunning">
+      <button class="start-button" (click)="startTimer()">
+        <i class="fa-solid fa-play"></i>
+      </button>
+    </div>
+    <div *ngIf="isTimerRunning">
+      <button class="pause-button" (click)="pauseTimer()">
+        <i class="fa-solid fa-pause"></i>
+      </button>
+    </div>
     <button class="reset-button" (click)="resetTimer()">
-      <mat-icon>restart_alt</mat-icon>
+      <i class="fa-solid fa-undo"></i>
     </button>
     <button class="edit-button" (click)="openEditDialog()">
-      <mat-icon>settings</mat-icon>
+      <i class="fa-sharp fa-solid fa-gear"></i>
     </button>
   </div>
 </div>

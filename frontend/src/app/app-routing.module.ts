@@ -5,12 +5,15 @@ import { LoginComponent } from './components/login/login.component';
 import { RegisterComponent } from './components/register/register.component';
 import { TodoComponent } from './components/todo/todo.component';
 import { AccountActivationComponent } from './components/account-activation/account-activation.component';
+import { HomeComponent } from './components/home/home.component';
 
 const routes: Routes = [
+    { path: '', component:HomeComponent },
     { path: 'register', component: RegisterComponent },
     { path: 'login', component: LoginComponent },
     { path: 'todo', component: TodoComponent },
     { path: 'activate/:uidb64/:token', component: AccountActivationComponent },
+
 ];
 
 @NgModule({

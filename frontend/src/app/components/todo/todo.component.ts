@@ -43,6 +43,7 @@ export class TodoComponent {
             console.log(event.container.data);
             // send the updated data to the server
             this.saveTask(event.container.data[event.currentIndex]);
+            this.updateTaskOrders();
         } else {
             transferArrayItem(
                 event.previousContainer.data,
@@ -50,11 +51,55 @@ export class TodoComponent {
                 event.previousIndex,
                 event.currentIndex
             );
-            console.log(event.container.data);
             // send the updated data to the server
             this.saveTask(event.container.data[event.currentIndex]);
+            this.updateTaskOrders();
         }
     }
+
+    private updateTaskOrders(): void {
+        // Update the order of tasks within each category array
+        this.tasks.forEach((task, index) => task.order = index);
+        this.inprogress.forEach((task, index) => task.order = index);
+        this.completed.forEach((task, index) => task.order = index);
+        // Save the updated orders to the backend
+        this.saveTaskOrders([...this.tasks, ...this.inprogress, ...this.completed]);
+    }
+
+    private saveTaskOrders(tasks: ITask[]): void {
+        // Fetch CSRF token from Django cookie (change csrftoken to the correct cookie title if needed)
+        const csrfToken = this.getCookie('csrftoken');
+        console.log(tasks);
+
+        const httpOptions = {
+            headers: new HttpHeaders({
+                'Content-Type': 'application/json', // Set the content type to JSON
+            }),
+            withCredentials: true, // Include CSRF cookie in the request
+        };
+
+        if (csrfToken) {
+            httpOptions.headers = httpOptions.headers.append(
+                'X-CSRFToken',
+                csrfToken
+            );
+        }
+
+        this.httpClient
+            .put<any>(
+                `http://localhost:8000/todo/updateTaskOrders/`,
+                tasks, // Send the updated data in the request body as JSON
+                httpOptions
+            )
+            .subscribe(
+                (response) => {
+
+                    // Handle the response if needed (e.g., show a success message)
+                    console.log('Task orders updated successfully!', response);
+                }
+            );
+    }
+
     ngOnInit(): void {
         this.todoForm = this.fb.group({
             item: ['', Validators.required],
@@ -136,10 +181,21 @@ export class TodoComponent {
                 (response) => {
                     // Handle the response if needed (e.g., store the tasks in the component property)
                     console.log('Tasks fetched successfully!', response);
+
+                    const groupedTasks: Record<string, ITask[]> = {
+                        'todo': [],
+                        'inprogress': [],
+                        'completed': []
+                    };
+    
+                    response.forEach((task: ITask) => {
+                        groupedTasks[task.category].push(task);
+                    });
+                    console.log(groupedTasks);
                     // add the tasks to the correct array
-                    this.tasks = response.filter((t: ITask) => t.category === 'todo');
-                    this.inprogress = response.filter((t: ITask) => t.category === 'inprogress');
-                    this.completed = response.filter((t: ITask) => t.category === 'completed');
+                this.tasks = groupedTasks['todo'].sort((a, b) => a.order - b.order);
+                this.inprogress = groupedTasks['inprogress'].sort((a, b) => a.order - b.order);
+                this.completed = groupedTasks['completed'].sort((a, b) => a.order - b.order);
                 },
                 (error) => {
                     // Handle the error if the request fails
@@ -175,7 +231,6 @@ export class TodoComponent {
         } else if (this.completed.find((t) => t === task)) {
             task.category = 'completed';
         }
-        console.log(task);
         const updatedTask: ITask = {
             id: task.id,
             title: task.title,
@@ -184,8 +239,8 @@ export class TodoComponent {
             update_date: currentDate.toISOString(),
             due_date: task.due_date,
             category: task.category,
+            order: task.order,
         };
-        console.log(updatedTask);
 
         this.httpClient
             .put<any>(
@@ -308,6 +363,7 @@ export class TodoComponent {
                     update_date: currentDate.toISOString(),
                     due_date: currentDate.toISOString(),
                     category: category,
+                    order: 0,
                 };
                 console.log(newTask);
                 const csrfToken = this.getCookie('csrftoken');

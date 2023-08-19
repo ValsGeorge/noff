@@ -28,6 +28,7 @@ import { EditDialogComponent } from './components/edit-dialog/edit-dialog.compon
 import { LoginComponent } from './components/login/login.component';
 import { RegisterComponent } from './components/register/register.component';
 import { AccountActivationComponent } from './components/account-activation/account-activation.component';
+import { HomeComponent } from './components/home/home.component';
 
 @NgModule({
     declarations: [
@@ -41,6 +42,7 @@ import { AccountActivationComponent } from './components/account-activation/acco
         LoginComponent,
         RegisterComponent,
         AccountActivationComponent,
+        HomeComponent,
     ],
     imports: [
         BrowserModule,

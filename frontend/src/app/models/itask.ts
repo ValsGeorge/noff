@@ -6,4 +6,5 @@ export interface ITask {
     update_date: string;
     due_date: string;
     category: string;
+    order: number;
 }

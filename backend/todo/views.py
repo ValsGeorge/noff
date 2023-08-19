@@ -22,7 +22,7 @@ def getAllTasks(request):
     tasks = Todo.objects.all()
 
     # Convert the tasks queryset to a list of dictionaries (JSON serializable format)
-    tasks_data = [{'id': task.id,'title': task.title, 'description': task.description, 'completed': task.completed, 'category': task.category} for task in tasks]
+    tasks_data = [{'id': task.id, 'order':task.positionID ,'title': task.title, 'description': task.description, 'completed': task.completed, 'category': task.category} for task in tasks]
 
     # Return the tasks data as JSON response
     return JsonResponse(tasks_data, safe=False)
@@ -35,6 +35,7 @@ def add(request):
         title = request.POST['title']
         description = request.POST['description']
         category = request.POST['category']
+        # positionID = request.POST['positionID']
         todo = Todo.objects.create(category=category, title=title, description=description)
         return JsonResponse({'message': 'Task added successfully!'})
     except KeyError:
@@ -44,6 +45,24 @@ def add(request):
         # Other exceptions (e.g., database error)
         return JsonResponse({'error': str(e)}, status=500)
     
+@csrf_exempt
+def updateTaskOrders(request):
+    try:
+        data = json.loads(request.body)
+        print(data)
+        for task in data:
+            # match the task id with the database
+            todo = Todo.objects.get(id=task['id'])
+            print("todo", todo)
+            # update the positionID
+            todo.positionID = task['order']
+            print("positionID", todo.positionID)
+            # save the changes
+            todo.save()
+        return JsonResponse({'message': 'Task updated successfully!'})
+    except Exception as e:
+        # Other exceptions (e.g., database error)
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 @csrf_exempt
