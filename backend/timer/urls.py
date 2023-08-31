@@ -4,6 +4,10 @@ from . import views
 
 urlpatterns = [
     path("", views.index, name="index"),
-    path("getPreset/<int:user_id>", views.getPreset, name="getPreset"),
-    path("savePreset/", views.savePreset, name="savePreset"),
+    path("get-preset/<int:user_id>", views.get_preset, name="get_preset"),
+    path("save-preset/", views.save_preset, name="save_preset"),
+    path("save-timer/", views.save_timer, name="save_pimer"),
+    path("get-timer/<int:user_id>", views.get_timer, name="getTimer"),
+    path("generate-share-code/", views.generate_share_code, name="generate_share_code"),
+    path("connect-with-code/", views.connect_with_code, name="connect_with_code")
 ]

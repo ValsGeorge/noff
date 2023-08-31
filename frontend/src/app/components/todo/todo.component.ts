@@ -11,6 +11,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { ITask } from '../../models/itask';
 import { EditDialogComponent } from '../edit-dialog/edit-dialog.component';
 const currentDate: Date = new Date();
+import { Title } from '@angular/platform-browser';
+import { AuthService } from 'src/app/services/auth.service';
 @Component({
     selector: 'app-todo',
     templateUrl: './todo.component.html',
@@ -30,8 +32,12 @@ export class TodoComponent {
     constructor(
         private fb: FormBuilder,
         private dialog: MatDialog,
-        private httpClient: HttpClient
-    ) { }
+        private httpClient: HttpClient,
+        private titleService: Title,
+        private authService: AuthService
+    ) {
+        this.titleService.setTitle("Todo");
+    }
 
     drop(event: CdkDragDrop<ITask[]>): void {
         if (event.previousContainer === event.container) {
@@ -40,7 +46,6 @@ export class TodoComponent {
                 event.previousIndex,
                 event.currentIndex
             );
-            console.log(event.container.data);
             // send the updated data to the server
             this.saveTask(event.container.data[event.currentIndex]);
             this.updateTaskOrders();
@@ -69,8 +74,6 @@ export class TodoComponent {
     private saveTaskOrders(tasks: ITask[]): void {
         // Fetch CSRF token from Django cookie (change csrftoken to the correct cookie title if needed)
         const csrfToken = this.getCookie('csrftoken');
-        console.log(tasks);
-
         const httpOptions = {
             headers: new HttpHeaders({
                 'Content-Type': 'application/json', // Set the content type to JSON
@@ -95,7 +98,6 @@ export class TodoComponent {
                 (response) => {
 
                     // Handle the response if needed (e.g., show a success message)
-                    console.log('Task orders updated successfully!', response);
                 }
             );
     }
@@ -116,92 +118,49 @@ export class TodoComponent {
         return null;
     }
 
-    addTask(): void {
-        const body = new HttpParams()
-            .set('title', this.todoForm.value.item)
-            .set('description', ''); // You can add a description if needed
-
-        // Fetch CSRF token from Django cookie (change csrftoken to the correct cookie title if needed)
-        const csrfToken = this.getCookie('csrftoken');
-
-        const httpOptions = {
-            headers: new HttpHeaders({
-                'Content-Type': 'application/x-www-form-urlencoded',
-            }),
-            withCredentials: true, // Include CSRF cookie in the request
-        };
-
-        if (csrfToken) {
-            httpOptions.headers = httpOptions.headers.append(
-                'X-CSRFToken',
-                csrfToken
-            );
-        }
-
-        this.httpClient
-            .post<any>(
-                'http://localhost:8000/todo/add/',
-                body.toString(),
-                httpOptions
-            )
-            .subscribe(
-                (response) => {
-                    // Handle the response if needed (e.g., show a success message)
-                    console.log('Task added successfully!', response);
-                    // Clear the input field after successful addition
-                    this.todoForm.reset();
-                },
-                (error) => {
-                    // Handle the error if the request fails
-                    console.error('Error adding task:', error);
-                }
-            );
-        this.fetchAllTasks();
-    }
-
     fetchAllTasks(): void {
         // Fetch CSRF token from Django cookie (change csrftoken to the correct cookie title if needed)
-        const csrfToken = this.getCookie('csrftoken');
+        this.authService.getUserDetails().subscribe((user) => {
+            const userID = user.id;
+            const csrfToken = this.getCookie('csrftoken');
 
-        const httpOptions = {
-            headers: new HttpHeaders(),
-            withCredentials: true, // Include CSRF cookie in the request
-        };
+            const httpOptions = {
+                headers: new HttpHeaders(),
+                withCredentials: true, // Include CSRF cookie in the request
+            };
 
-        if (csrfToken) {
-            httpOptions.headers = httpOptions.headers.append(
-                'X-CSRFToken',
-                csrfToken
+            if (csrfToken) {
+                httpOptions.headers = httpOptions.headers.append(
+                    'X-CSRFToken',
+                    csrfToken
+                );
+            }
+
+            this.httpClient
+                .get<any>(`http://localhost:8000/todo/getAllTasks/${userID}`, httpOptions)
+                .subscribe(
+                    (response) => {
+                        // Handle the response if needed (e.g., store the tasks in the component property)
+                        const groupedTasks: Record<string, ITask[]> = {
+                            'todo': [],
+                            'inprogress': [],
+                            'completed': []
+                        };
+
+                        response.forEach((task: ITask) => {
+                            groupedTasks[task.category].push(task);
+                        });
+                        // add the tasks to the correct array
+                        this.tasks = groupedTasks['todo'].sort((a, b) => a.order - b.order);
+                        this.inprogress = groupedTasks['inprogress'].sort((a, b) => a.order - b.order);
+                        this.completed = groupedTasks['completed'].sort((a, b) => a.order - b.order);
+                    },
+                    (error) => {
+                        // Handle the error if the request fails
+                        console.error('Error fetching tasks:', error);
+                    }
             );
-        }
-
-        this.httpClient
-            .get<any>('http://localhost:8000/todo/getAllTasks', httpOptions)
-            .subscribe(
-                (response) => {
-                    // Handle the response if needed (e.g., store the tasks in the component property)
-                    console.log('Tasks fetched successfully!', response);
-
-                    const groupedTasks: Record<string, ITask[]> = {
-                        'todo': [],
-                        'inprogress': [],
-                        'completed': []
-                    };
-    
-                    response.forEach((task: ITask) => {
-                        groupedTasks[task.category].push(task);
-                    });
-                    console.log(groupedTasks);
-                    // add the tasks to the correct array
-                this.tasks = groupedTasks['todo'].sort((a, b) => a.order - b.order);
-                this.inprogress = groupedTasks['inprogress'].sort((a, b) => a.order - b.order);
-                this.completed = groupedTasks['completed'].sort((a, b) => a.order - b.order);
-                },
-                (error) => {
-                    // Handle the error if the request fails
-                    console.error('Error fetching tasks:', error);
-                }
-            );
+        });
     }
 
     saveTask(task: ITask): void {
@@ -231,6 +190,7 @@ export class TodoComponent {
         } else if (this.completed.find((t) => t === task)) {
             task.category = 'completed';
         }
+        // ! GET THE USER ID CORRECTLY
         const updatedTask: ITask = {
             id: task.id,
             title: task.title,
@@ -240,8 +200,8 @@ export class TodoComponent {
             due_date: task.due_date,
             category: task.category,
             order: task.order,
+            userID: task.userID,
         };
-
         this.httpClient
             .put<any>(
                 `http://localhost:8000/todo/updateTask/${task.id}`,
@@ -251,7 +211,6 @@ export class TodoComponent {
             .subscribe(
                 (response) => {
                     // Handle the response if needed (e.g., show a success message)
-                    console.log('Task updated successfully!', response);
                 },
                 (error) => {
                     // Handle the error if the request fails
@@ -298,14 +257,13 @@ export class TodoComponent {
             .subscribe(
                 (response) => {
                     // Handle the response if needed (e.g., show a success message)
-                    console.log('Task deleted successfully!', response);
                     // Remove the task from the tasks array
                     this.tasks.splice(taskIndex, 1);
                     this.fetchAllTasks();
                 }
             );
 
-        
+
 
     }
 
@@ -328,7 +286,6 @@ export class TodoComponent {
             if (result) {
                 task.title = result.title;
                 task.description = result.description;
-                console.log(task);
                 this.saveTask(task);
             }
         });
@@ -355,53 +312,58 @@ export class TodoComponent {
 
         dialogRef.afterClosed().subscribe((result) => {
             if (result) {
-                const newTask: ITask = {
-                    id: 0,
-                    title: result.title,
-                    description: result.description,
-                    creation_date: currentDate.toISOString(),
-                    update_date: currentDate.toISOString(),
-                    due_date: currentDate.toISOString(),
-                    category: category,
-                    order: 0,
-                };
-                console.log(newTask);
-                const csrfToken = this.getCookie('csrftoken');
-                const body = new HttpParams()
-                    .set('title', newTask.title)
-                    .set('description', newTask.description)
-                    .set('category', newTask.category);
-                const httpOptions = {
-                    headers: new HttpHeaders({
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    }),
-                    withCredentials: true, // Include CSRF cookie in the request
-                };
+                this.authService.getUserDetails().subscribe((user) => {
+                    const userID = user.id;
+                    const maxOrder = [...this.tasks, ...this.inprogress, ...this.completed].filter((t) => t.category === category).length;
+                    const newTask: ITask = {
+                        id: 0,
+                        title: result.title,
+                        description: result.description,
+                        creation_date: currentDate.toISOString(),
+                        update_date: currentDate.toISOString(),
+                        due_date: currentDate.toISOString(),
+                        category: category,
+                        order: maxOrder,
+                        userID: userID,
+                    };
+                    const csrfToken = this.getCookie('csrftoken');
+                    const body = new HttpParams()
+                        .set('title', newTask.title)
+                        .set('description', newTask.description)
+                        .set('category', newTask.category)
+                        .set('order', newTask.order.toString())
+                        .set('userID', newTask.userID.toString());
+                    const httpOptions = {
+                        headers: new HttpHeaders({
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        }),
+                        withCredentials: true, // Include CSRF cookie in the request
+                    };
 
-                if (csrfToken) {
-                    httpOptions.headers = httpOptions.headers.append(
-                        'X-CSRFToken',
-                        csrfToken
-                    );
-                }
-                this.httpClient
-                    .post<any>(
-                        'http://localhost:8000/todo/add/',
-                        body.toString(),
-                        httpOptions
-                    )
-                    .subscribe(
-                        (response) => {
-                            // Handle the response if needed (e.g., show a success message)
-                            console.log('Task added successfully!', response);
-                            // Clear the input field after successful addition
-                            this.todoForm.reset();
-                        },
-                        (error) => {
-                            // Handle the error if the request fails
-                            console.error('Error adding task:', error);
-                        }
-                    );
+                    if (csrfToken) {
+                        httpOptions.headers = httpOptions.headers.append(
+                            'X-CSRFToken',
+                            csrfToken
+                        );
+                    }
+                    this.httpClient
+                        .post<any>(
+                            'http://localhost:8000/todo/add/',
+                            body.toString(),
+                            httpOptions
+                        )
+                        .subscribe(
+                            (response) => {
+                                // Handle the response if needed (e.g., show a success message)
+                                // Clear the input field after successful addition
+                                this.todoForm.reset();
+                            },
+                            (error) => {
+                                // Handle the error if the request fails
+                                console.error('Error adding task:', error);
+                            }
+                        );
+                });
                 this.fetchAllTasks();
             }
         });

@@ -7,4 +7,5 @@ export interface ITask {
     due_date: string;
     category: string;
     order: number;
+    userID: number;
 }

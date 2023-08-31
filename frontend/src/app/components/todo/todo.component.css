@@ -124,6 +124,9 @@
 }
 
 .container-fluid {
+    display: flex;
+    flex-direction: column;
+
     background-color: #222;
     color: #fff;
 }
@@ -182,13 +185,6 @@ h2 {
 .context-menu .option:hover {
     background-color: #505050;
     border-radius: 5px;
-}
-
-.container-fluid {
-    display: flex;
-    flex-direction: column;
-
-    height: 100vh;
 }
 
 .bottom-screen {

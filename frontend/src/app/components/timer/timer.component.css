@@ -33,60 +33,17 @@
     justify-content: center;
     transition: background-color 0.2s ease, transform 0.2s ease;
     color: #fff;
+    border: none;
 }
 
 .pomodoro-timer button mat-icon {
     font-size: 24px;
 }
 
-/* Start Button */
-.pomodoro-timer button.start-button {
+.pomodoro-timer button {
     background-color: #222;
 }
 
-.pomodoro-timer button.start-button:hover {
+.pomodoro-timer button:hover {
     background-color: #444;
-}
-
-.pomodoro-timer button.start-button:active {
-    background-color: #666;
-}
-
-/* Pause Button */
-.pomodoro-timer button.pause-button {
-    background-color: #222;
-}
-
-.pomodoro-timer button.pause-button:hover {
-    background-color: #444;
-}
-
-.pomodoro-timer button.pause-button:active {
-    background-color: #666;
-}
-
-/* Reset Button */
-.pomodoro-timer button.reset-button {
-    background-color: #222;
-}
-
-.pomodoro-timer button.reset-button:hover {
-    background-color: #444;
-}
-
-.pomodoro-timer button.reset-button:active {
-    background-color: #666;
-}
-
-/* Edit Button */
-.pomodoro-timer button.edit-button {
-    background-color: #222;
-}
-
-.pomodoro-timer button.edit-button:hover {
-    background-color: #444;
-}
-
-.pomodoro-timer button.edit-button:active {
-    background-color: #666;
 }

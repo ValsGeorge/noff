@@ -8,6 +8,7 @@ import pytz
 from .models import Todo
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from django.contrib.auth.models import User
 
 def index(request):
     todos = Todo.objects.all()
@@ -17,16 +18,18 @@ def index(request):
     return render(request, 'index.html', context)
 
 @csrf_exempt
-def getAllTasks(request):
-    # Retrieve all tasks from the database
-    tasks = Todo.objects.all()
+def getAllTasks(request, userID):
+    # Get the user using the user id from the request
+    print(userID)
+    user = User.objects.get(id=userID)
+    # Get all tasks that belong to the user
+    tasks = Todo.objects.filter(user=user)
 
     # Convert the tasks queryset to a list of dictionaries (JSON serializable format)
     tasks_data = [{'id': task.id, 'order':task.positionID ,'title': task.title, 'description': task.description, 'completed': task.completed, 'category': task.category} for task in tasks]
 
     # Return the tasks data as JSON response
     return JsonResponse(tasks_data, safe=False)
-
 
 @csrf_exempt
 def add(request):
@@ -35,8 +38,13 @@ def add(request):
         title = request.POST['title']
         description = request.POST['description']
         category = request.POST['category']
-        # positionID = request.POST['positionID']
-        todo = Todo.objects.create(category=category, title=title, description=description)
+        user_id = request.POST['userID']
+        positionID = request.POST['order']
+        # find the user by id
+        user = User.objects.get(id=user_id)
+        # create a new task
+        todo = Todo.objects.create(user=user, category=category, title=title, description=description, positionID=positionID)
+
         return JsonResponse({'message': 'Task added successfully!'})
     except KeyError:
         # If 'title' or 'description' is not present in the request

@@ -1,0 +1,41 @@
+*{
+    margin: 0;
+    padding: 0;
+    border: none;
+    outline: none;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+  }
+  
+  .body{
+    min-height: 100vh;
+    padding: 0 10px;
+    background: #222;
+    overflow: hidden;
+  }
+  
+  .body::before{
+    content: "";
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    background-color: #f02f2f;
+    left: 15%;
+    top: 20%;
+    filter: blur(120px);
+  }
+  
+  .body::after{
+    content: "";
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    background-color: #cd8922;
+    left: 80%;
+    top: 80%;
+    filter: blur(120px);
+  }
+
+  .container{
+    color: #fff;
+  }

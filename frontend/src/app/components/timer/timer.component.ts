@@ -14,6 +14,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/services/auth.service';
 import { catchError, of, switchMap, take } from 'rxjs';
+import { Title } from '@angular/platform-browser';
 
 @Component({
     selector: 'app-timer',
@@ -53,7 +54,8 @@ export class TimerComponent {
         public dialog: MatDialog,
         private httpClient: HttpClient,
         private router: Router,
-        private authService: AuthService
+        private authService: AuthService,
+        private titleService: Title
     ) {}
 
     ngOnInit(): void {
@@ -74,36 +76,39 @@ export class TimerComponent {
         // call the backend to get the timer
         const csrfToken = this.getCookie('timer');
 
-        this.authService.getUserDetails().pipe(
-            switchMap((userData) => {
-                const userId = userData.id;
-                console.log(userData);
-                const httpOptions = {
-                    headers: new HttpHeaders(),
-                    withCredentials: true, // Include CSRF cookie in the request
-                };
+        this.authService
+            .getUserDetails()
+            .pipe(
+                switchMap((userData) => {
+                    const userId = userData.id;
+                    const httpOptions = {
+                        headers: new HttpHeaders(),
+                        withCredentials: true, // Include CSRF cookie in the request
+                    };
 
-                if (csrfToken) {
-                    httpOptions.headers = httpOptions.headers.append(
-                        'X-CSRFToken',
-                        csrfToken
+                    if (csrfToken) {
+                        httpOptions.headers = httpOptions.headers.append(
+                            'X-CSRFToken',
+                            csrfToken
+                        );
+                    }
+
+                    return this.httpClient.get<ITimer>(
+                        `http://localhost:8000/timer/get-preset/${userId}`,
+                        httpOptions
                     );
-                }
-
-                return this.httpClient.get<ITimer>(
-                    `http://localhost:8000/timer/getPreset/${userId}`,
-                    httpOptions
-                );
-            }),
-            catchError((error) => {
-                // Handle error if unable to fetch user details or timer data
-                console.error('Error fetching user details or timer:', error);
-                return of(null); // Return an empty observable in case of an error
-            })
-        ).subscribe(
-            (response) => {
+                }),
+                catchError((error) => {
+                    // Handle error if unable to fetch user details or timer data
+                    console.error(
+                        'Error fetching user details or timer:',
+                        error
+                    );
+                    return of(null); // Return an empty observable in case of an error
+                })
+            )
+            .subscribe((response) => {
                 if (response) {
-                    console.log(response);
                     this.workMinutes = response.workMinutes;
                     this.workSeconds = response.workSeconds;
                     this.breakMinutes = response.breakMinutes;
@@ -115,8 +120,7 @@ export class TimerComponent {
                     this.minutes = this.workMinutes;
                     this.seconds = this.workSeconds;
                 }
-            }
-        );
+            });
     }
 
     startTimer(): void {
@@ -125,6 +129,7 @@ export class TimerComponent {
             this.timerInterval = setInterval(() => {
                 this.updateTimer();
             }, 1000);
+            this.saveTimer();
         }
     }
 
@@ -141,12 +146,12 @@ export class TimerComponent {
         this.isWorkInterval = true;
         this.minutes = this.workMinutes;
         this.seconds = 0;
+        this.titleService.setTitle('Todo');
     }
 
     updateTimer(): void {
         if (this.minutes == 0 && this.seconds == 0) {
             this.pauseTimer();
-            // save it to the database
 
             this.isWorkInterval = !this.isWorkInterval; // Toggle between work and break intervals
 
@@ -165,6 +170,9 @@ export class TimerComponent {
                 this.seconds--;
             }
         }
+        this.titleService.setTitle(
+            this.minutes + ':' + this.seconds + ' - ' + 'Todo'
+        );
     }
 
     openEditDialog(): void {
@@ -194,66 +202,202 @@ export class TimerComponent {
                 this.seconds = this.workSeconds;
 
                 const csrfToken = this.getCookie('csrf-token');
-                console.log(csrfToken);
 
-                const timerData = {
-                    workMinutes: this.workMinutes,
-                    workSeconds: this.workSeconds,
-                    breakMinutes: this.breakMinutes,
-                    breakSeconds: this.breakSeconds,
-                    autoStart: this.autoRestart,
-                };
                 this.authService.getUserDetails().subscribe((userDetails) => {
                     const userID = userDetails.id;
-                  
-                const body = new HttpParams()
-                    .set('userId', userID)
-                    .set('workMinutes', this.workMinutes)
-                    .set('workSeconds', this.workSeconds)
-                    .set('breakMinutes', this.breakMinutes)
-                    .set('breakSeconds', this.breakSeconds)
-                    .set('autoStart', this.autoRestart)
-                    
-                const httpOptions = {
-                    headers: new HttpHeaders({
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    }),
-                    withCredentials: true, // Include CSRF cookie in the request
-                };
 
-                if (csrfToken) {
-                    httpOptions.headers = httpOptions.headers.append(
-                        'X-CSRFToken',
-                        csrfToken
-                    );
-                }
+                    const body = new HttpParams()
+                        .set('userId', userID)
+                        .set('workMinutes', this.workMinutes)
+                        .set('workSeconds', this.workSeconds)
+                        .set('breakMinutes', this.breakMinutes)
+                        .set('breakSeconds', this.breakSeconds)
+                        .set('autoStart', this.autoRestart);
 
-                this.httpClient
-                    .post<any>(
-                        'http://localhost:8000/timer/savePreset/',
-                        body.toString(),
-                        httpOptions
-                    )
-                    .subscribe(
-                        (response) => {
-                            // Handle the response if needed (e.g., show a success message)
-                            console.log('Timer added successfully!', response);
-                            // Clear the input field after successful addition
-                        },
-                        (error) => {
-                            // Handle the error if the request fails
-                            console.error('Error adding Timer:', error);
-                        }
-                    );
+                    const httpOptions = {
+                        headers: new HttpHeaders({
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        }),
+                        withCredentials: true, // Include CSRF cookie in the request
+                    };
+
+                    if (csrfToken) {
+                        httpOptions.headers = httpOptions.headers.append(
+                            'X-CSRFToken',
+                            csrfToken
+                        );
+                    }
+
+                    this.httpClient
+                        .post<any>(
+                            'http://localhost:8000/timer/save-preset/',
+                            body.toString(),
+                            httpOptions
+                        )
+                        .subscribe(
+                            (response) => {
+                                // Handle the response if needed (e.g., show a success message)
+                                // Clear the input field after successful addition
+                            },
+                            (error) => {
+                                // Handle the error if the request fails
+                                console.error('Error adding Timer:', error);
+                            }
+                        );
                 });
             }
         });
     }
+
+    saveTimer(): void {
+        const csrfToken = this.getCookie('csrf-token');
+
+        const timerData = {
+            workMinutes: this.workMinutes,
+            workSeconds: this.workSeconds,
+            breakMinutes: this.breakMinutes,
+            breakSeconds: this.breakSeconds,
+        };
+        console.log(timerData);
+
+        this.authService.getUserDetails().subscribe((userDetails) => {
+            const userID = userDetails.id;
+
+            const body = new HttpParams()
+                .set('userId', userID)
+                .set('workMinutes', this.workMinutes)
+                .set('workSeconds', this.workSeconds)
+                .set('breakMinutes', this.breakMinutes)
+                .set('breakSeconds', this.breakSeconds);
+
+            const httpOptions = {
+                headers: new HttpHeaders({
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                }),
+                withCredentials: true, // Include CSRF cookie in the request
+            };
+
+            if (csrfToken) {
+                httpOptions.headers = httpOptions.headers.append(
+                    'X-CSRFToken',
+                    csrfToken
+                );
+            }
+
+            this.httpClient
+                .post<any>(
+                    'http://localhost:8000/timer/save-timer/',
+                    body.toString(),
+                    httpOptions
+                )
+                .subscribe(
+                    (response) => {
+                        // Handle the response if needed (e.g., show a success message)
+                        // Clear the input field after successful addition
+                    },
+                    (error) => {
+                        // Handle the error if the request fails
+                        console.error('Error adding Timer:', error);
+                    }
+                );
+        });
+    }
+
     goToRegisterPage(): void {
         this.router.navigate(['/register']);
     }
 
     goToLoginPage(): void {
         this.router.navigate(['/login']);
+    }
+    shareCode: string = '';
+
+    generateShareCode(): void {
+        const csrfToken = this.getCookie('csrf-token');
+
+        this.authService.getUserDetails().subscribe((userDetails) => {
+            const userID = userDetails.id;
+
+            const body = new HttpParams().set('userID', userID);
+
+            const httpOptions = {
+                headers: new HttpHeaders({
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                }),
+                withCredentials: true, // Include CSRF cookie in the request
+            };
+
+            if (csrfToken) {
+                httpOptions.headers = httpOptions.headers.append(
+                    'X-CSRFToken',
+                    csrfToken
+                );
+            }
+
+            this.httpClient
+                .post<any>(
+                    'http://localhost:8000/timer/generate-share-code/',
+                    body.toString(),
+                    httpOptions
+                )
+                .subscribe(
+                    (response) => {
+                        // Handle the response if needed (e.g., show a success message)
+                        // Clear the input field after successful addition
+                        console.log(response);
+                        navigator.clipboard.writeText(response.share_code);
+                        this.shareCode = response.share_code;
+                    },
+                    (error) => {
+                        // Handle the error if the request fails
+                        console.error('Error generate share code:', error);
+                    }
+                );
+        });
+    }
+
+    connectWithCode(): void {
+        const csrfToken = this.getCookie('csrf-token');
+
+        this.authService.getUserDetails().subscribe((userDetails) => {
+            const userID = userDetails.id;
+
+            const body = new HttpParams()
+                .set('userID', userID)
+                .set('share_code', this.shareCode);
+
+            const httpOptions = {
+                headers: new HttpHeaders({
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                }),
+                withCredentials: true, // Include CSRF cookie in the request
+            };
+
+            if (csrfToken) {
+                httpOptions.headers = httpOptions.headers.append(
+                    'X-CSRFToken',
+                    csrfToken
+                );
+            }
+
+            this.httpClient
+                .post<any>(
+                    'http://localhost:8000/timer/connect-with-code/',
+                    body.toString(),
+                    httpOptions
+                )
+                .subscribe(
+                    (response) => {
+                        // Handle the response if needed (e.g., show a success message)
+                        // Clear the input field after successful addition
+                        console.log(response);
+                        this.shareCode = response.share_code;
+                    },
+                    (error) => {
+                        // Handle the error if the request fails
+                        console.error('Error generate share code:', error);
+                    }
+                );
+        });
     }
 }
