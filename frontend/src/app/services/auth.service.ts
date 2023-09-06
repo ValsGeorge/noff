@@ -11,7 +11,6 @@ import {
     Router,
 } from '@angular/router';
 
-
 @Injectable({
     providedIn: 'root',
 })
@@ -133,7 +132,7 @@ export class AuthService implements CanActivate {
         const token = this.getAuthToken();
         return token ? `Token ${token}` : '';
     }
-    
+
     getUserDetails(): Observable<any> {
         const token = this.getAuthToken();
         if (!token) {

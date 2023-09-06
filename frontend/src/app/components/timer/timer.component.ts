@@ -15,6 +15,8 @@ import { Router } from '@angular/router';
 import { AuthService } from 'src/app/services/auth.service';
 import { catchError, of, switchMap, take } from 'rxjs';
 import { Title } from '@angular/platform-browser';
+import { WebSocketSubject } from 'rxjs/webSocket';
+import { OnInit } from '@angular/core';
 
 @Component({
     selector: 'app-timer',
@@ -36,7 +38,7 @@ import { Title } from '@angular/platform-browser';
         ]),
     ],
 })
-export class TimerComponent {
+export class TimerComponent implements OnInit {
     timerTitle: string = 'Pomodoro Timer';
     minutes: number = 25;
     seconds: number = 0;
@@ -49,6 +51,9 @@ export class TimerComponent {
     breakSeconds: number = 0;
     autoRestart: boolean = true;
     timerActive: boolean = false;
+    room: string = '';
+
+    private socket$: WebSocketSubject<any> | undefined;
 
     constructor(
         public dialog: MatDialog,
@@ -60,7 +65,130 @@ export class TimerComponent {
 
     ngOnInit(): void {
         this.fetchTimer();
-        // this.resetTimer();
+        this.checkIfInRoom();
+    }
+
+    isHost: boolean = false;
+
+    private setupWebSocket(userID: number, shareCode: string): void {
+        console.log('setupWebSocket');
+        this.socket$ = new WebSocketSubject({
+            url: `ws://localhost:8000/ws/timer/${shareCode}/`,
+        });
+        if (this.socket$ && !this.socket$.closed) {
+            console.log('shareCode', shareCode);
+            this.room = shareCode;
+        }
+        this.socket$.subscribe(
+            (data) => {
+                // Handle WebSocket data (timer updates)
+                console.log('data', data);
+                if (data.action === 'start') {
+                    this.startTimer();
+                } else if (data.action === 'pause') {
+                    this.pauseTimer();
+                } else if (data.action === 'reset') {
+                    this.resetTimer();
+                } else if (data.action === 'set_timer') {
+                    console.log('set_timer');
+                    if (this.isHost) {
+                        this.sendUpdateTimer();
+                    }
+                } else if (data.action === 'update') {
+                    if (!this.isHost) {
+                        this.workMinutes = data.workMinutes;
+                        this.workSeconds = data.workSeconds;
+                        this.breakMinutes = data.breakMinutes;
+                        this.breakSeconds = data.breakSeconds;
+                        this.minutes = data.workMinutes;
+                        this.seconds = data.workSeconds;
+                    }
+                }
+            },
+            (error) => {
+                // Handle error here
+                console.error('WebSocket error:', error);
+            }
+        );
+    }
+    sendUpdateTimer() {
+        const timerSettings = {
+            workMinutes: this.workMinutes,
+            workSeconds: this.workSeconds,
+            breakMinutes: this.breakMinutes,
+            breakSeconds: this.breakSeconds,
+        };
+
+        this.sendWebSocketMessage({
+            action: 'set_timer',
+            settings: timerSettings,
+        });
+    }
+
+    private sendWebSocketMessage(message: any): void {
+        console.log('sendWebSocketMessage');
+        console.log(this.socket$ && !this.socket$.closed);
+        if (this.socket$ && !this.socket$.closed) {
+            console.log('sending:', message);
+            this.socket$.next(message);
+        }
+    }
+
+    private checkIfInRoom(): void {
+        const csrfToken = this.getCookie('csrf-token');
+
+        this.authService.getUserDetails().subscribe((userDetails) => {
+            const userID = userDetails.id;
+
+            const httpOptions = {
+                headers: new HttpHeaders({
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                }),
+
+                withCredentials: true, // Include CSRF cookie in the request
+            };
+
+            if (csrfToken) {
+                httpOptions.headers = httpOptions.headers.append(
+                    'X-CSRFToken',
+                    csrfToken
+                );
+            }
+
+            this.httpClient
+                .get<any>(
+                    `http://localhost:8000/timer/check-if-in-room/${userID}`
+                )
+                .subscribe(
+                    (response) => {
+                        // Handle the response if needed (e.g., show a success message)
+                        // Clear the input field after successful addition
+                        console.log(response);
+                        if (response) {
+                            console.log('in room');
+                            this.setupWebSocket(userID, response.share_code);
+                            if (response.is_host) {
+                                this.isHost = true;
+                            }
+                            console.log('isHost', this.isHost);
+                            this.workMinutes =
+                                response.pomodoro_timer.workMinutes;
+                            this.workSeconds =
+                                response.pomodoro_timer.workSeconds;
+                            this.breakMinutes =
+                                response.pomodoro_timer.breakMinutes;
+                            this.breakSeconds =
+                                response.pomodoro_timer.breakSeconds;
+                            this.minutes = response.pomodoro_timer.workMinutes;
+                            this.seconds = response.pomodoro_timer.workSeconds;
+                        }
+                    },
+                    (error) => {
+                        // Handle the error if the request fails
+                        console.error('Error generate share code:', error);
+                    }
+                );
+        });
     }
 
     private getCookie(title: string): string | null {
@@ -129,7 +257,7 @@ export class TimerComponent {
             this.timerInterval = setInterval(() => {
                 this.updateTimer();
             }, 1000);
-            this.saveTimer();
+            this.sendWebSocketMessage({ action: 'start' });
         }
     }
 
@@ -137,16 +265,19 @@ export class TimerComponent {
         if (this.isTimerRunning) {
             this.isTimerRunning = false;
             clearInterval(this.timerInterval);
+            this.sendWebSocketMessage({ action: 'pause' });
         }
     }
 
     resetTimer(): void {
+        console.log('resetTimer');
         this.isTimerRunning = false;
         clearInterval(this.timerInterval);
         this.isWorkInterval = true;
         this.minutes = this.workMinutes;
         this.seconds = 0;
         this.titleService.setTitle('Todo');
+        this.sendWebSocketMessage({ action: 'reset' });
     }
 
     updateTimer(): void {
@@ -236,8 +367,8 @@ export class TimerComponent {
                         )
                         .subscribe(
                             (response) => {
-                                // Handle the response if needed (e.g., show a success message)
-                                // Clear the input field after successful addition
+                                // Send a message to the WebSocket server to update the timer
+                                this.sendUpdateTimer();
                             },
                             (error) => {
                                 // Handle the error if the request fails
@@ -258,7 +389,7 @@ export class TimerComponent {
             breakMinutes: this.breakMinutes,
             breakSeconds: this.breakSeconds,
         };
-        console.log(timerData);
+        console.log('timerData', timerData);
 
         this.authService.getUserDetails().subscribe((userDetails) => {
             const userID = userDetails.id;
@@ -344,9 +475,12 @@ export class TimerComponent {
                     (response) => {
                         // Handle the response if needed (e.g., show a success message)
                         // Clear the input field after successful addition
+                        console.log('generate share code');
                         console.log(response);
                         navigator.clipboard.writeText(response.share_code);
                         this.shareCode = response.share_code;
+                        this.setupWebSocket(userID, this.shareCode);
+                        this.isHost = true;
                     },
                     (error) => {
                         // Handle the error if the request fails
@@ -361,6 +495,7 @@ export class TimerComponent {
 
         this.authService.getUserDetails().subscribe((userDetails) => {
             const userID = userDetails.id;
+            console.log('share code: ' + this.shareCode);
 
             const body = new HttpParams()
                 .set('userID', userID)
@@ -391,7 +526,13 @@ export class TimerComponent {
                         // Handle the response if needed (e.g., show a success message)
                         // Clear the input field after successful addition
                         console.log(response);
-                        this.shareCode = response.share_code;
+                        console.log(this.shareCode);
+                        // send message to websocket
+                        this.setupWebSocket(userID, this.shareCode);
+                        this.sendWebSocketMessage({
+                            action: 'update',
+                            settings: response,
+                        });
                     },
                     (error) => {
                         // Handle the error if the request fails
@@ -399,5 +540,53 @@ export class TimerComponent {
                     }
                 );
         });
+    }
+
+    disconnect(): void {
+        // disconnect the socket and call the backend to delete the records from tables
+        const csrfToken = this.getCookie('csrf-token');
+
+        this.authService.getUserDetails().subscribe((userDetails) => {
+            const userID = userDetails.id;
+
+            const httpOptions = {
+                headers: new HttpHeaders({
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                }),
+
+                withCredentials: true, // Include CSRF cookie in the request
+            };
+
+            if (csrfToken) {
+                httpOptions.headers = httpOptions.headers.append(
+                    'X-CSRFToken',
+                    csrfToken
+                );
+            }
+
+            this.httpClient
+                .get<any>(
+                    `http://localhost:8000/timer/delete-connection/${userID}`
+                )
+                .subscribe(
+                    (response) => {
+                        // Handle the response if needed (e.g., show a success message)
+                        // Clear the input field after successful addition
+                        console.log(response);
+                        if (response) {
+                            this.socket$?.complete();
+                            this.socket$ = undefined;
+                            this.isHost = false;
+                            this.shareCode = '';
+                            this.room = '';
+                        }
+                    },
+                    (error) => {
+                        // Handle the error if the request fails
+                        console.error('Error generate share code:', error);
+                    }
+                );
+        });
+        this.fetchTimer();
     }
 }

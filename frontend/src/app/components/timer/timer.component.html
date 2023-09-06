@@ -19,16 +19,16 @@
             <i class="fa-sharp fa-solid fa-gear"></i>
         </button>
     </div>
-    <!-- Add this button to generate a sharing code -->
-    <button *ngIf="!isTimerRunning" (click)="generateShareCode()">
-        Generate Share Code
-    </button>
+    <div class="share-div" *ngIf="!room">
+        <!-- Add this button to generate a sharing code -->
+        <button (click)="generateShareCode()">Generate Share Code</button>
 
-    <!-- Add this field to input the share code -->
-    <input
-        *ngIf="!isTimerRunning"
-        [(ngModel)]="shareCode"
-        placeholder="Enter Share Code"
-    />
-    <button *ngIf="!isTimerRunning" (click)="connectWithCode()">Connect</button>
+        <!-- Add this field to input the share code -->
+        <input [(ngModel)]="shareCode" placeholder="Enter Share Code" />
+        <button (click)="connectWithCode()">Connect</button>
+    </div>
+    <div class="share-div" *ngIf="room">
+        <p>Connected to room {{ room }}</p>
+        <button (click)="disconnect()">Disconnect</button>
+    </div>
 </div>

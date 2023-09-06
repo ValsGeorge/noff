@@ -148,11 +148,12 @@ def generate_share_code(request):
             return JsonResponse({'error': 'Invalid user ID'})
 
         share_code = generate_code(user_id)
+        user = User.objects.get(id=share_code.user_id)
+        Connection.objects.create(sender=user, receiver=user, shareCode=share_code, status='accepted')
         return JsonResponse({'share_code': share_code.code})
     
     return JsonResponse({'error': 'Invalid request method'})
 
-    
 
 
 @csrf_exempt
@@ -169,11 +170,57 @@ def connect_with_code(request):
     validated_share_code = validate_share_code(share_code)
     print(validated_share_code)
     if validated_share_code:
+        # before everything, check if the connection already exists
+        if Connection.objects.filter(shareCode=validated_share_code, receiver=receiver).exists():
+            return JsonResponse({'message': 'fail - connection already exists'})
         sender = User.objects.get(id=validated_share_code.user_id)
-        # shareCode must be a ShareCode object
         shareCode = ShareCode.objects.get(code=validated_share_code.code)
+        # if he is in another connection, delete it, and if he is the host, delete the share code and every connection with that share code
+        if Connection.objects.filter(receiver=receiver).exists():
+            if Connection.objects.filter(receiver=receiver).last().sender.id == receiver.id:
+                ShareCode.objects.filter(user=receiver).delete()
+                Connection.objects.filter(shareCode=shareCode).delete()
+            else:
+                Connection.objects.filter(receiver=receiver).delete()
         connection = Connection.objects.create(sender=sender, receiver=receiver, shareCode=shareCode, status='accepted')
         connection.save()
         return JsonResponse({'message': 'success'})
     else:
-        return JsonResponse({'message': 'fail'})
+        return JsonResponse({'message': 'fail - invalid share code'})
+
+
+@csrf_exempt
+def check_if_in_room(request, user_id):
+    userID = user_id
+    print(request.POST)
+    print(userID)
+    try:
+        user = User.objects.get(id=userID)
+        if Connection.objects.filter(receiver=user).exists():
+            # get the pomodoro timer of the host in order to match the timer of ther user with the host's timer
+            pomodoro_timer = Pomodoro.objects.get(user=Connection.objects.filter(receiver=user).last().sender)
+            is_host = Connection.objects.filter(receiver=user).last().sender.id == user.id
+            print("is_host", is_host)
+            
+            return JsonResponse({'message': 'success', 'share_code': Connection.objects.filter(receiver=user).last().shareCode.code, 'is_host': is_host, 'pomodoro_timer': {'workMinutes': pomodoro_timer.workMinutes, 'workSeconds': pomodoro_timer.workSeconds, 'breakMinutes': pomodoro_timer.breakMinutes, 'breakSeconds': pomodoro_timer.breakSeconds}})
+        else:
+            return JsonResponse({'message': 'fail - user not in room'})
+    except User.DoesNotExist:
+        return JsonResponse({'message': 'fail - user does not exist'})
+    
+
+@csrf_exempt
+def delete_connection(request, user_id):
+    try:
+        user = User.objects.get(id=user_id)
+        if Connection.objects.filter(receiver=user).exists():
+            Connection.objects.filter(receiver=user).delete()
+            # also check if the user is the host, in that case delete the share code and every connection with that share code
+            if ShareCode.objects.filter(user=user).exists():
+                ShareCode.objects.filter(user=user).delete()
+                Connection.objects.filter(shareCode=ShareCode.objects.filter(user=user).last()).delete()
+            return JsonResponse({'message': 'success'})
+        else:
+            return JsonResponse({'message': 'fail - user not in room'})
+    except User.DoesNotExist:
+        return JsonResponse({'message': 'fail - user does not exist'})

@@ -35,7 +35,7 @@ def register(request):
 
         user = User(username=username, email=email)
         user.set_password(password)
-        user.is_active = False
+        user.is_active = True
         user.save()
 
         # Welcome email
@@ -77,12 +77,14 @@ def login(request):
 
         if username is None or password is None:
             return Response({'error': 'Please provide all required fields'}, status=status.HTTP_400_BAD_REQUEST)
+        # manually authenticate user for test
+
 
         user = authenticate(username=username, password=password)
-
+        print("user", user)
         if user is not None:
             token, _ = Token.objects.get_or_create(user=user)
-
+            print("token", token)
             return Response({
                 'success': 'Logged in successfully',
                 'token': f'{token.key}',  # Convert the token object to a string
