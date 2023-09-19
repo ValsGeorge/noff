@@ -21,11 +21,19 @@ export class EditDialogComponent {
         @Inject(MAT_DIALOG_DATA) public data: any,
         private fb: FormBuilder
     ) {
+        const formatDueDate = (dateString: string) => {
+            const [day, month, year] = dateString.split('/').map(Number);
+            console.log(day, month, year);
+            const formattedMonth = String(month).padStart(2, '0');
+            const formattedDay = String(day).padStart(2, '0');
+            return `${year}-${formattedMonth}-${formattedDay}`;
+        };
+
         this.editForm = this.fb.group({
             title: [data.title || '', Validators.required],
             description: [data.description || ''],
             priority: [''],
-            dueDate: [''],
+            dueDate: [data.dueDate ? formatDueDate(data.dueDate) : ''],
             wMinutes: [data.wMinutes || 0],
             wSeconds: [data.wSeconds || 0],
             bMinutes: [data.bMinutes || 0],

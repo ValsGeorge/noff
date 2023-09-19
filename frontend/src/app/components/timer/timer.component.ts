@@ -165,12 +165,10 @@ export class TimerComponent implements OnInit {
                         // Clear the input field after successful addition
                         console.log(response);
                         if (response) {
-                            console.log('in room');
                             this.setupWebSocket(userID, response.share_code);
                             if (response.is_host) {
                                 this.isHost = true;
                             }
-                            console.log('isHost', this.isHost);
                             this.workMinutes =
                                 response.pomodoro_timer.workMinutes;
                             this.workSeconds =
@@ -183,10 +181,7 @@ export class TimerComponent implements OnInit {
                             this.seconds = response.pomodoro_timer.workSeconds;
                         }
                     },
-                    (error) => {
-                        // Handle the error if the request fails
-                        console.error('Error generate share code:', error);
-                    }
+                    (error) => {}
                 );
         });
     }

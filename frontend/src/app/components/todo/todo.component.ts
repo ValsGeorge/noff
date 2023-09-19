@@ -36,7 +36,7 @@ export class TodoComponent {
         private titleService: Title,
         private authService: AuthService
     ) {
-        this.titleService.setTitle("Todo");
+        this.titleService.setTitle('Todo');
     }
 
     drop(event: CdkDragDrop<ITask[]>): void {
@@ -64,11 +64,15 @@ export class TodoComponent {
 
     private updateTaskOrders(): void {
         // Update the order of tasks within each category array
-        this.tasks.forEach((task, index) => task.order = index);
-        this.inprogress.forEach((task, index) => task.order = index);
-        this.completed.forEach((task, index) => task.order = index);
+        this.tasks.forEach((task, index) => (task.order = index));
+        this.inprogress.forEach((task, index) => (task.order = index));
+        this.completed.forEach((task, index) => (task.order = index));
         // Save the updated orders to the backend
-        this.saveTaskOrders([...this.tasks, ...this.inprogress, ...this.completed]);
+        this.saveTaskOrders([
+            ...this.tasks,
+            ...this.inprogress,
+            ...this.completed,
+        ]);
     }
 
     private saveTaskOrders(tasks: ITask[]): void {
@@ -87,19 +91,16 @@ export class TodoComponent {
                 csrfToken
             );
         }
-
+        console.log('saveTaskOrders');
         this.httpClient
             .put<any>(
                 `http://localhost:8000/todo/updateTaskOrders/`,
                 tasks, // Send the updated data in the request body as JSON
                 httpOptions
             )
-            .subscribe(
-                (response) => {
-
-                    // Handle the response if needed (e.g., show a success message)
-                }
-            );
+            .subscribe((response) => {
+                // Handle the response if needed (e.g., show a success message)
+            });
     }
 
     ngOnInit(): void {
@@ -137,34 +138,57 @@ export class TodoComponent {
             }
 
             this.httpClient
-                .get<any>(`http://localhost:8000/todo/getAllTasks/${userID}`, httpOptions)
+                .get<any>(
+                    `http://localhost:8000/todo/getAllTasks/${userID}`,
+                    httpOptions
+                )
                 .subscribe(
                     (response) => {
-                        // Handle the response if needed (e.g., store the tasks in the component property)
                         const groupedTasks: Record<string, ITask[]> = {
-                            'todo': [],
-                            'inprogress': [],
-                            'completed': []
+                            todo: [],
+                            inprogress: [],
+                            completed: [],
                         };
 
-                        response.forEach((task: ITask) => {
-                            groupedTasks[task.category].push(task);
+                        response.tasks.forEach((task: any) => {
+                            // Map positionID to order
+                            const mappedTask: ITask = {
+                                id: task.id,
+                                title: task.title,
+                                description: task.description,
+                                creation_date: task.created_at,
+                                update_date: task.updated_at,
+                                due_date: task.due_date,
+                                category: task.category,
+                                order: task.positionID,
+                                userID: task.user_id,
+                            };
+
+                            groupedTasks[task.category].push(mappedTask);
                         });
-                        // add the tasks to the correct array
-                        this.tasks = groupedTasks['todo'].sort((a, b) => a.order - b.order);
-                        this.inprogress = groupedTasks['inprogress'].sort((a, b) => a.order - b.order);
-                        this.completed = groupedTasks['completed'].sort((a, b) => a.order - b.order);
+
+                        console.log(groupedTasks);
+                        this.tasks = groupedTasks['todo'].sort(
+                            (a, b) => a.order - b.order
+                        );
+                        this.inprogress = groupedTasks['inprogress'].sort(
+                            (a, b) => a.order - b.order
+                        );
+                        this.completed = groupedTasks['completed'].sort(
+                            (a, b) => a.order - b.order
+                        );
                     },
                     (error) => {
                         // Handle the error if the request fails
                         console.error('Error fetching tasks:', error);
                     }
-            );
+                );
         });
     }
 
     saveTask(task: ITask): void {
         // Fetch CSRF token from Django cookie (change csrftoken to the correct cookie name if needed)
+        console.log(task);
         const csrfToken = this.getCookie('csrftoken');
 
         const httpOptions = {
@@ -190,7 +214,6 @@ export class TodoComponent {
         } else if (this.completed.find((t) => t === task)) {
             task.category = 'completed';
         }
-        // ! GET THE USER ID CORRECTLY
         const updatedTask: ITask = {
             id: task.id,
             title: task.title,
@@ -202,6 +225,7 @@ export class TodoComponent {
             order: task.order,
             userID: task.userID,
         };
+        console.log(updatedTask);
         this.httpClient
             .put<any>(
                 `http://localhost:8000/todo/updateTask/${task.id}`,
@@ -210,7 +234,8 @@ export class TodoComponent {
             )
             .subscribe(
                 (response) => {
-                    // Handle the response if needed (e.g., show a success message)
+                    // update the tasks so it has the same date format
+                    this.fetchAllTasks();
                 },
                 (error) => {
                     // Handle the error if the request fails
@@ -254,17 +279,12 @@ export class TodoComponent {
                 `http://localhost:8000/todo/deleteTask/${task.id}`,
                 httpOptions
             )
-            .subscribe(
-                (response) => {
-                    // Handle the response if needed (e.g., show a success message)
-                    // Remove the task from the tasks array
-                    this.tasks.splice(taskIndex, 1);
-                    this.fetchAllTasks();
-                }
-            );
-
-
-
+            .subscribe((response) => {
+                // Handle the response if needed (e.g., show a success message)
+                // Remove the task from the tasks array
+                this.tasks.splice(taskIndex, 1);
+                this.fetchAllTasks();
+            });
     }
 
     setContextMenuPosition(event: MouseEvent): void {
@@ -274,18 +294,20 @@ export class TodoComponent {
 
     openEditDialog(task: ITask): void {
         const dialogRef = this.dialog.open(EditDialogComponent, {
-            width: '500px',
             data: {
                 title: task.title,
                 description: task.description,
-                showPomodoroSettings: false, // Indicate that it's Todo Task settings
+                dueDate: task.due_date,
+                showPomodoroSettings: false,
             },
         });
 
         dialogRef.afterClosed().subscribe((result) => {
+            console.log(result);
             if (result) {
                 task.title = result.title;
                 task.description = result.description;
+                task.due_date = result.dueDate || '';
                 this.saveTask(task);
             }
         });
@@ -314,25 +336,31 @@ export class TodoComponent {
             if (result) {
                 this.authService.getUserDetails().subscribe((user) => {
                     const userID = user.id;
-                    const maxOrder = [...this.tasks, ...this.inprogress, ...this.completed].filter((t) => t.category === category).length;
+                    const maxOrder = [
+                        ...this.tasks,
+                        ...this.inprogress,
+                        ...this.completed,
+                    ].filter((t) => t.category === category).length;
                     const newTask: ITask = {
                         id: 0,
                         title: result.title,
                         description: result.description,
                         creation_date: currentDate.toISOString(),
                         update_date: currentDate.toISOString(),
-                        due_date: currentDate.toISOString(),
+                        due_date: result.dueDate || '',
                         category: category,
                         order: maxOrder,
                         userID: userID,
                     };
+                    console.log(newTask);
                     const csrfToken = this.getCookie('csrftoken');
                     const body = new HttpParams()
                         .set('title', newTask.title)
                         .set('description', newTask.description)
                         .set('category', newTask.category)
                         .set('order', newTask.order.toString())
-                        .set('userID', newTask.userID.toString());
+                        .set('userID', newTask.userID.toString())
+                        .set('due_date', newTask.due_date.toString());
                     const httpOptions = {
                         headers: new HttpHeaders({
                             'Content-Type': 'application/x-www-form-urlencoded',

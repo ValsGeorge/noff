@@ -8,6 +8,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import timedelta
+from rest_framework import status
+from rest_framework.response import Response
 
 def index(request):
     return JsonResponse({'message': 'Hello, world!'})
@@ -202,11 +204,11 @@ def check_if_in_room(request, user_id):
             is_host = Connection.objects.filter(receiver=user).last().sender.id == user.id
             print("is_host", is_host)
             
-            return JsonResponse({'message': 'success', 'share_code': Connection.objects.filter(receiver=user).last().shareCode.code, 'is_host': is_host, 'pomodoro_timer': {'workMinutes': pomodoro_timer.workMinutes, 'workSeconds': pomodoro_timer.workSeconds, 'breakMinutes': pomodoro_timer.breakMinutes, 'breakSeconds': pomodoro_timer.breakSeconds}})
+            return JsonResponse({'sucess': 'success', 'share_code': Connection.objects.filter(receiver=user).last().shareCode.code, 'is_host': is_host, 'pomodoro_timer': {'workMinutes': pomodoro_timer.workMinutes, 'workSeconds': pomodoro_timer.workSeconds, 'breakMinutes': pomodoro_timer.breakMinutes, 'breakSeconds': pomodoro_timer.breakSeconds}}, status=200)
         else:
-            return JsonResponse({'message': 'fail - user not in room'})
+            return JsonResponse({'error': 'User not found in any room'}, status=404)
     except User.DoesNotExist:
-        return JsonResponse({'message': 'fail - user does not exist'})
+        return JsonResponse({'error': 'User does not exist'}, status=404)
     
 
 @csrf_exempt

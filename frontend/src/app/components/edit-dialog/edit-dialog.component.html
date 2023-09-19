@@ -11,6 +11,11 @@
                 <label>Description</label>
                 <textarea formControlName="description" placeholder="Enter description"></textarea>
             </div>
+            <div class="due-date">
+                <label>Due Date:</label>
+                <input formControlName="dueDate" type="date" placeholder="dd-mm-yyyy" value="" min="1997-01-01"
+                    max="2030-12-31" style="margin-left: 10px;" />
+            </div>
         </ng-container>
 
         <ng-container *ngIf="showPomodoroSettings">

@@ -1,11 +1,11 @@
 .edit-dialog {
-    max-width: 500px;
+    width: 500px;
     padding: 20px;
     background-color: #252525;
     /* Dark background color */
     color: #fff;
     /* Text color for dark theme */
-    border-radius: 8px;
+    border-radius: 28px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
@@ -114,3 +114,12 @@ h2 {
 .form-field-horizontal label {
     margin-right: 20%;
 }
+input[type="date"] { 
+    background: transparent;
+    color: white;
+    border: none;
+  }
+  
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(100%);
+  }

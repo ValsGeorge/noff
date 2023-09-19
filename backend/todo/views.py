@@ -17,19 +17,46 @@ def index(request):
     }
     return render(request, 'index.html', context)
 
+from datetime import datetime
+
+from datetime import datetime
+
 @csrf_exempt
 def getAllTasks(request, userID):
     # Get the user using the user id from the request
-    print(userID)
     user = User.objects.get(id=userID)
     # Get all tasks that belong to the user
     tasks = Todo.objects.filter(user=user)
 
-    # Convert the tasks queryset to a list of dictionaries (JSON serializable format)
-    tasks_data = [{'id': task.id, 'order':task.positionID ,'title': task.title, 'description': task.description, 'completed': task.completed, 'category': task.category} for task in tasks]
+    formatted_tasks = []
+    
+    # Reverse the due_date format to DD-MM-YYYY and create a list of formatted dictionaries
+    for task in tasks:
+        formatted_task = {
+            'id': task.id,
+            'user_id': task.user_id,
+            'positionID': task.positionID,
+            'category': task.category,
+            'title': task.title,
+            'description': task.description,
+            'completed': task.completed,
+            'created_at': task.created_at,
+            'updated_at': task.updated_at,
+            'due_date': task.due_date
+        }
+        # format the date for each task
+        if task.due_date:
+            formatted_task['due_date'] = task.due_date.strftime('%d-%m-%Y')
+        formatted_tasks.append(formatted_task)
+
+    # Convert the formatted tasks list to a JSON serializable format
+    response_data = {
+        'tasks': formatted_tasks
+    }
 
     # Return the tasks data as JSON response
-    return JsonResponse(tasks_data, safe=False)
+    return JsonResponse(response_data, safe=False)
+
 
 @csrf_exempt
 def add(request):
@@ -40,10 +67,14 @@ def add(request):
         category = request.POST['category']
         user_id = request.POST['userID']
         positionID = request.POST['order']
-        # find the user by id
         user = User.objects.get(id=user_id)
+        due_date = request.POST['due_date']
+
+        if due_date == '':
+            due_date = None
+        
         # create a new task
-        todo = Todo.objects.create(user=user, category=category, title=title, description=description, positionID=positionID)
+        Todo.objects.create(user=user, category=category, title=title, description=description, positionID=positionID, due_date=due_date)
 
         return JsonResponse({'message': 'Task added successfully!'})
     except KeyError:
@@ -82,18 +113,15 @@ def update(request, todo_id):
     if request.method == 'PUT':
         data = json.loads(request.body)
         print(data)
-        title = data.get('title', None)
-        description = data.get('description', None)
-        category = data.get('category', None)
-        print(title)
-        if title is not None:
-            todo.title = title
+        title = data.get('title')
+        description = data.get('description')
+        category = data.get('category')
+        due_date = data.get('due_date')
 
-        if description is not None:
-            todo.description = description
-
-        if category is not None:
-            todo.category = category
+        todo.title = title if title is not None else todo.title
+        todo.description = description if description is not None else todo.description
+        todo.category = category if category is not None else todo.category
+        todo.due_date = due_date if due_date is not None else todo.due_date
 
         # todo.updated_at = datetime.now(pytz.timezone('Europe/Berlin'))
         todo.save()
