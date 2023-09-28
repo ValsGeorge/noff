@@ -9,6 +9,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 
 import { MatDialog } from '@angular/material/dialog';
 import { ITask } from '../../models/itask';
+import { ICategory } from '../../models/icategory';
 import { EditDialogComponent } from '../edit-dialog/edit-dialog.component';
 const currentDate: Date = new Date();
 import { Title } from '@angular/platform-browser';
@@ -23,11 +24,14 @@ export class TodoComponent {
     tasks: ITask[] = [];
     inprogress: ITask[] = [];
     completed: ITask[] = [];
+
+    categories: ICategory[] = [];
     contextMenuTask: ITask | null = null;
     contextMenuX = 0;
     contextMenuY = 0;
     editedTitle = '';
     editedDescription = '';
+    newCategoryName: string = '';
 
     constructor(
         private fb: FormBuilder,
@@ -39,24 +43,26 @@ export class TodoComponent {
         this.titleService.setTitle('Todo');
     }
 
-    drop(event: CdkDragDrop<ITask[]>): void {
+    drop(event: CdkDragDrop<ITask[]>, name: string): void {
+        console.log('drop', event);
+        console.log('name', name);
         if (event.previousContainer === event.container) {
             moveItemInArray(
                 event.container.data,
                 event.previousIndex,
                 event.currentIndex
             );
-            // send the updated data to the server
             this.saveTask(event.container.data[event.currentIndex]);
             this.updateTaskOrders();
         } else {
+            const movedTask = event.previousContainer.data[event.previousIndex];
+            console.log('movedTask', movedTask);
             transferArrayItem(
                 event.previousContainer.data,
                 event.container.data,
                 event.previousIndex,
                 event.currentIndex
             );
-            // send the updated data to the server
             this.saveTask(event.container.data[event.currentIndex]);
             this.updateTaskOrders();
         }
@@ -76,13 +82,12 @@ export class TodoComponent {
     }
 
     private saveTaskOrders(tasks: ITask[]): void {
-        // Fetch CSRF token from Django cookie (change csrftoken to the correct cookie title if needed)
         const csrfToken = this.getCookie('csrftoken');
         const httpOptions = {
             headers: new HttpHeaders({
-                'Content-Type': 'application/json', // Set the content type to JSON
+                'Content-Type': 'application/json',
             }),
-            withCredentials: true, // Include CSRF cookie in the request
+            withCredentials: true,
         };
 
         if (csrfToken) {
@@ -92,22 +97,73 @@ export class TodoComponent {
             );
         }
         console.log('saveTaskOrders');
-        this.httpClient
-            .put<any>(
-                `http://localhost:8000/todo/updateTaskOrders/`,
-                tasks, // Send the updated data in the request body as JSON
-                httpOptions
-            )
-            .subscribe((response) => {
-                // Handle the response if needed (e.g., show a success message)
-            });
+        this.httpClient.put<any>(
+            `http://localhost:8000/todo/updateTaskOrders/`,
+            tasks,
+            httpOptions
+        );
     }
 
     ngOnInit(): void {
         this.todoForm = this.fb.group({
             item: ['', Validators.required],
         });
+        this.getAllCategories();
         this.fetchAllTasks();
+    }
+
+    dropCategory(event: CdkDragDrop<ICategory[]>): void {
+        console.log('dropCategory', event);
+        if (event.previousContainer === event.container) {
+            // If a category was reordered within the same list
+            moveItemInArray(
+                this.categories,
+                event.previousIndex,
+                event.currentIndex
+            );
+        } else {
+            // If a category was moved from one list to another
+            const movedCategory =
+                event.previousContainer.data[event.previousIndex];
+            transferArrayItem(
+                event.previousContainer.data,
+                event.container.data,
+                event.previousIndex,
+                event.currentIndex
+            );
+            // You may need to update the moved category's properties here
+            // For example, if you want to update its position or parent category
+        }
+    }
+
+    private updateCategoryOrders(): void {
+        // Update the order of categories
+        this.categories.forEach((category, index) => (category.order = index));
+        // Save the updated orders to the backend
+        this.saveCategoryOrders(this.categories);
+    }
+
+    private saveCategoryOrders(categories: ICategory[]): void {
+        const csrfToken = this.getCookie('csrftoken');
+        const httpOptions = {
+            headers: new HttpHeaders({
+                'Content-Type': 'application/json',
+            }),
+            withCredentials: true,
+        };
+
+        if (csrfToken) {
+            httpOptions.headers = httpOptions.headers.append(
+                'X-CSRFToken',
+                csrfToken
+            );
+        }
+        console.log('saveCategoryOrders');
+        this.httpClient.put<any>(
+            `http://localhost:8000/category/updateCategoryOrders/`,
+            categories,
+            httpOptions
+        );
     }
 
     private getCookie(title: string): string | null {
@@ -120,14 +176,13 @@ export class TodoComponent {
     }
 
     fetchAllTasks(): void {
-        // Fetch CSRF token from Django cookie (change csrftoken to the correct cookie title if needed)
         this.authService.getUserDetails().subscribe((user) => {
             const userID = user.id;
             const csrfToken = this.getCookie('csrftoken');
 
             const httpOptions = {
                 headers: new HttpHeaders(),
-                withCredentials: true, // Include CSRF cookie in the request
+                withCredentials: true,
             };
 
             if (csrfToken) {
@@ -144,39 +199,8 @@ export class TodoComponent {
                 )
                 .subscribe(
                     (response) => {
-                        const groupedTasks: Record<string, ITask[]> = {
-                            todo: [],
-                            inprogress: [],
-                            completed: [],
-                        };
-
-                        response.tasks.forEach((task: any) => {
-                            // Map positionID to order
-                            const mappedTask: ITask = {
-                                id: task.id,
-                                title: task.title,
-                                description: task.description,
-                                creation_date: task.created_at,
-                                update_date: task.updated_at,
-                                due_date: task.due_date,
-                                category: task.category,
-                                order: task.positionID,
-                                userID: task.user_id,
-                            };
-
-                            groupedTasks[task.category].push(mappedTask);
-                        });
-
-                        console.log(groupedTasks);
-                        this.tasks = groupedTasks['todo'].sort(
-                            (a, b) => a.order - b.order
-                        );
-                        this.inprogress = groupedTasks['inprogress'].sort(
-                            (a, b) => a.order - b.order
-                        );
-                        this.completed = groupedTasks['completed'].sort(
-                            (a, b) => a.order - b.order
-                        );
+                        // Populate tasks for each category
+                        this.populateCategoryTasks(response.tasks);
                     },
                     (error) => {
                         // Handle the error if the request fails
@@ -186,16 +210,40 @@ export class TodoComponent {
         });
     }
 
+    populateCategoryTasks(tasks: any[]): void {
+        // Remove all tasks from each category
+        this.categories.forEach((category) => (category.task = []));
+        // Iterate through tasks and add them to their respective categories
+        tasks.forEach((task) => {
+            const categoryIndex = this.categories.findIndex(
+                (category) => category.name === task.category
+            );
+
+            if (categoryIndex !== -1) {
+                this.categories[categoryIndex].task.push({
+                    id: task.id,
+                    title: task.title,
+                    description: task.description,
+                    creation_date: task.created_at,
+                    update_date: task.updated_at,
+                    due_date: task.due_date,
+                    category: task.category,
+                    order: task.positionID,
+                    userID: task.user_id,
+                });
+            }
+        });
+    }
+
     saveTask(task: ITask): void {
-        // Fetch CSRF token from Django cookie (change csrftoken to the correct cookie name if needed)
         console.log(task);
         const csrfToken = this.getCookie('csrftoken');
 
         const httpOptions = {
             headers: new HttpHeaders({
-                'Content-Type': 'application/json', // Set the content type to JSON
+                'Content-Type': 'application/json',
             }),
-            withCredentials: true, // Include CSRF cookie in the request
+            withCredentials: true,
         };
 
         if (csrfToken) {
@@ -204,16 +252,14 @@ export class TodoComponent {
                 csrfToken
             );
         }
+        const categoryContainingTask = this.categories.find((category) =>
+            category.task.some((t) => t === task)
+        );
 
-        // Create an object with the updated properties
-        // find in what array the task is to determine the category
-        if (this.tasks.find((t) => t === task)) {
-            task.category = 'todo';
-        } else if (this.inprogress.find((t) => t === task)) {
-            task.category = 'inprogress';
-        } else if (this.completed.find((t) => t === task)) {
-            task.category = 'completed';
+        if (categoryContainingTask) {
+            task.category = categoryContainingTask.name;
         }
+
         const updatedTask: ITask = {
             id: task.id,
             title: task.title,
@@ -229,16 +275,15 @@ export class TodoComponent {
         this.httpClient
             .put<any>(
                 `http://localhost:8000/todo/updateTask/${task.id}`,
-                updatedTask, // Send the updated data in the request body as JSON
+                updatedTask,
                 httpOptions
             )
             .subscribe(
                 (response) => {
-                    // update the tasks so it has the same date format
+                    console.log(response);
                     this.fetchAllTasks();
                 },
                 (error) => {
-                    // Handle the error if the request fails
                     console.error('Error updating task:', error);
                 }
             );
@@ -259,12 +304,11 @@ export class TodoComponent {
 
         this.contextMenuTask = null;
 
-        // Fetch CSRF token from Django cookie (change csrftoken to the correct cookie name if needed)
         const csrfToken = this.getCookie('csrftoken');
 
         const httpOptions = {
             headers: new HttpHeaders(),
-            withCredentials: true, // Include CSRF cookie in the request
+            withCredentials: true,
         };
 
         if (csrfToken) {
@@ -280,8 +324,6 @@ export class TodoComponent {
                 httpOptions
             )
             .subscribe((response) => {
-                // Handle the response if needed (e.g., show a success message)
-                // Remove the task from the tasks array
                 this.tasks.splice(taskIndex, 1);
                 this.fetchAllTasks();
             });
@@ -365,7 +407,7 @@ export class TodoComponent {
                         headers: new HttpHeaders({
                             'Content-Type': 'application/x-www-form-urlencoded',
                         }),
-                        withCredentials: true, // Include CSRF cookie in the request
+                        withCredentials: true,
                     };
 
                     if (csrfToken) {
@@ -382,12 +424,9 @@ export class TodoComponent {
                         )
                         .subscribe(
                             (response) => {
-                                // Handle the response if needed (e.g., show a success message)
-                                // Clear the input field after successful addition
                                 this.todoForm.reset();
                             },
                             (error) => {
-                                // Handle the error if the request fails
                                 console.error('Error adding task:', error);
                             }
                         );
@@ -395,5 +434,81 @@ export class TodoComponent {
                 this.fetchAllTasks();
             }
         });
+    }
+    createCategory(): void {
+        const newCategoryName = this.newCategoryName;
+        console.log(newCategoryName);
+        if (newCategoryName) {
+            const newCategory = {
+                name: newCategoryName,
+                task: [],
+            };
+
+            const csrfToken = this.getCookie('csrftoken');
+
+            const body = new HttpParams().set('name', newCategory.name);
+
+            const httpOptions = {
+                headers: new HttpHeaders({
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                }),
+                withCredentials: true,
+            };
+
+            if (csrfToken) {
+                httpOptions.headers = httpOptions.headers.append(
+                    'X-CSRFToken',
+                    csrfToken
+                );
+            }
+
+            this.httpClient
+                .post<any>(
+                    'http://localhost:8000/category/create-category/',
+                    body.toString(),
+                    httpOptions
+                )
+                .subscribe(
+                    (response) => {
+                        this.newCategoryName = '';
+                        this.getAllCategories();
+                    },
+                    (error) => {
+                        console.error('Error adding category:', error);
+                    }
+                );
+        }
+    }
+
+    getAllCategories(): void {
+        const csrfToken = this.getCookie('csrftoken');
+
+        const httpOptions = {
+            headers: new HttpHeaders(),
+            withCredentials: true,
+        };
+
+        if (csrfToken) {
+            httpOptions.headers = httpOptions.headers.append(
+                'X-CSRFToken',
+                csrfToken
+            );
+        }
+
+        this.httpClient
+            .get<any>(
+                'http://localhost:8000/category/get-all-categories/',
+                httpOptions
+            )
+            .subscribe(
+                (response) => {
+                    // Populate tasks for each category
+                    this.categories = response.categories;
+                    this.fetchAllTasks();
+                },
+                (error) => {
+                    console.error('Error fetching categories:', error);
+                }
+            );
     }
 }

@@ -23,5 +23,6 @@ urlpatterns = [
     path('timer/', include('timer.urls')),
     path('todo/', include('todo.urls')),
     path('accounts/', include('accounts.urls')),
+    path('category/', include('category.urls')),
 ]
 

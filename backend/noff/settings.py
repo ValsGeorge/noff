@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'timer.apps.TimerConfig',
     'todo.apps.TodoConfig',
+    'category.apps.CategoryConfig',
     'accounts.apps.AccountsConfig',
     'corsheaders',
     'rest_framework',

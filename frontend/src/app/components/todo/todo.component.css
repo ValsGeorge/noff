@@ -33,7 +33,7 @@
     width: 100%;
 }
 
-.col-md-9 h2 {
+.tasks-container h2 {
     font-size: 20px;
     text-align: center;
 }
@@ -42,7 +42,7 @@
     background: #1b1b1b;
     height: 91vh;
     border-radius: 10px;
-    width: 15%;
+    /* width: 15%; */
 }
 
 .form-color {
@@ -213,11 +213,12 @@ h2 {
     color: #ffffff;
 }
 /* align the task container into a row */
-.rrow{
+.tasks-list{
     display: flex;
     flex-direction: row;
     /* justify-content: space-between; */
     align-items: left;
+    min-width: 1000px;
 }
 /* task container for all the tasks */
 .tasks-container{
@@ -228,6 +229,9 @@ h2 {
     margin: 2%;
     cursor: pointer;
     width: 200px;
+    background-color: #16161655;
+    border: 2px solid #161616ff;
+    
 }
 
 .title{
@@ -240,8 +244,53 @@ h2 {
     color: #fff;
     margin-top: 5px;
 }
+.add-new-category{
+    border-radius: 4px;
+    background: #161616;
+    width: 300px;
+    max-width: 100%;
+    display: inline-block;
+    vertical-align: top;
+    border-radius: 10px;
+    width: 200px;
+    min-width: 200px;
+    height: 100%;
+    margin-top: 50px;
+}
+.add-new-category input{
+    border-radius: 4px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    margin-left: 5%;
+    width: 90%;
+    background: #ffffff23;
+    border: none;
+    color: #ffffff;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+.add-new-category input::placeholder{
+    color: #bdbdbd;
+}
+.test{
+    overflow-x: auto; /* or overflow-x: scroll; */
+}
+.test::-webkit-scrollbar {
+    height: 12px;
+    background-color: transparent;
+}
 
-@media screen and (max-width: 980px) {
+.test::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 10px;
+}
+
+.test::-webkit-scrollbar-thumb:hover {
+    background-color: #555;
+}
+
+
+/* @media screen and (max-width: 980px) {
     .left-div {
         width: 200px;
     }
@@ -270,4 +319,4 @@ h2 {
     .example-container {
         width: 100%;
     }
-}
+} */

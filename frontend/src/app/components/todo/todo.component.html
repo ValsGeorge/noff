@@ -3,24 +3,25 @@
 
     <div class="container-fluid">
         <div class="row">
-            <div class="col-md-3 left-div">
+            <div class=" col-md-2 left-div">
                 <mat-card class="mt-3 form-color"> </mat-card>
                 <app-timer></app-timer>
             </div>
-            <div class="col-md-9">
-                <div cdkDropListGroup>
-                    <div class="rrow">
-                        <div class="tasks-container col-md-3">
-                            <!-- to do -->
-                            <h2>To do</h2>
+            <div class="col-md-10 test">
+                <div>
+                    <div class="tasks-list" cdkDropList cdkDropListOrientation="horizontal" cdkDropListGroup
+                        [cdkDropListData]="categories" (cdkDropListDropped)="dropCategory($event)">
+                        <!-- Loop through each category -->
+                        <div class="tasks-container" *ngFor="let category of categories" cdkDrag>
+                            <!-- Display the category name -->
+                            <h2>{{ category.name }}</h2>
                             <div class="example-container">
-                                <div cdkDropList [cdkDropListData]="tasks" class="example-list"
-                                    (cdkDropListDropped)="drop($event)">
-                                    <div class="example-box" *ngFor="
-                                            let item of tasks;
-                                            let i = index" cdkDrag (contextmenu)="
-                                            openContextMenu($event, item)" (mousedown)="
-                                            setContextMenuPosition($event)">
+                                <div cdkDropList [cdkDropListData]="category.task" class="example-list"
+                                    (cdkDropListDropped)="drop($event, category.name)">
+                                    <!-- Loop through tasks within the category -->
+                                    <div class="example-box" *ngFor="let item of category.task; let i = index" cdkDrag
+                                        (contextmenu)="openContextMenu($event, item)"
+                                        (mousedown)="setContextMenuPosition($event)">
                                         <div class="title">
                                             {{ item.title }}
                                         </div>
@@ -30,64 +31,18 @@
                                             {{ item.due_date }}
                                         </div>
                                     </div>
-                                    <!-- add button for adding a task to todo list -->
                                 </div>
-                                <button class="add-task-btn" (click)="createTask('todo')">
+                                <button class="add-task-btn" (click)="createTask(category.name)">
                                     <i class="fas fa-plus"></i> Add task
                                 </button>
                             </div>
                         </div>
-                        <div class="tasks-container col-md-3">
-                            <!-- in progress -->
-                            <h2>In progress</h2>
-                            <div class="example-container">
-                                <div cdkDropList [cdkDropListData]="inprogress" class="example-list"
-                                    (cdkDropListDropped)="drop($event)">
-                                    <div class="example-box" *ngFor="
-                                            let item of inprogress;
-                                            let i = index" cdkDrag (contextmenu)="
-                                            openContextMenu($event, item)" (mousedown)="
-                                            setContextMenuPosition($event)">
-                                        <div class="title">
-                                            {{ item.title }}
-                                        </div>
-                                        <div class="due-date" *ngIf="item.due_date">
-                                            <!-- add a timer icon -->
-                                            <i class="far fa-clock"></i>
-                                            {{ item.due_date }}
-                                        </div>
-                                    </div>
-                                </div>
-                                <button class="add-task-btn" (click)="createTask('inprogress')">
-                                    <i class="fas fa-plus"></i> Add task
-                                </button>
-                            </div>
-                        </div>
-                        <div class="tasks-container col-md-3">
-                            <!-- completed -->
-                            <h2>Completed</h2>
-                            <div class="example-container">
-                                <div cdkDropList [cdkDropListData]="completed" class="example-list"
-                                    (cdkDropListDropped)="drop($event)">
-                                    <div class="example-box" *ngFor="
-                                            let item of completed;
-                                            let i = index" cdkDrag (contextmenu)="
-                                            openContextMenu($event, item)" (mousedown)="
-                                            setContextMenuPosition($event)">
-                                        <div class="title">
-                                            {{ item.title }}
-                                        </div>
-                                        <div class="due-date" *ngIf="item.due_date">
-                                            <!-- add a timer icon -->
-                                            <i class="far fa-clock"></i>
-                                            {{ item.due_date }}
-                                        </div>
-                                    </div>
-                                </div>
-                                <button class="add-task-btn" (click)="createTask('completed')">
-                                    <i class="fas fa-plus"></i> Add task
-                                </button>
-                            </div>
+                        <div class="add-new-category">
+                            <input type="text" placeholder="Add new category" [(ngModel)]="newCategoryName"
+                                (keyup.enter)="createCategory()">
+                            <button class="add-task-btn" (click)="createCategory()">
+                                <i class="fas fa-plus"></i> Add category
+                            </button>
                         </div>
                     </div>
                 </div>
