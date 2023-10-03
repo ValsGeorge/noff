@@ -14,10 +14,13 @@
                         <!-- Loop through each category -->
                         <div class="tasks-container" *ngFor="let category of categories" cdkDrag>
                             <!-- Display the category name -->
-                            <h2>{{ category.name }}</h2>
+                            <div class="name-wrapper">
+                                <h2 cdkDragHandle>{{ category.name }}</h2>
+                                <button class="delete-btn" (click)="deleteCategory(category)">X</button>
+                            </div>
                             <div class="example-container">
                                 <div cdkDropList [cdkDropListData]="category.task" class="example-list"
-                                    (cdkDropListDropped)="drop($event, category.name)">
+                                    (cdkDropListDropped)="drop($event)">
                                     <!-- Loop through tasks within the category -->
                                     <div class="example-box" *ngFor="let item of category.task; let i = index" cdkDrag
                                         (contextmenu)="openContextMenu($event, item)"

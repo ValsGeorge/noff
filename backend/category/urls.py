@@ -7,4 +7,5 @@ urlpatterns = [
     path("get-all-categories/", views.get_all_categories, name="get_categories"),
     path("delete-category/<int:category_id>", views.delete_category, name="delete_category"),
     path("update-category/<int:category_id>", views.update_category, name="update_category"),
+    path("update-category-orders/", views.update_category_orders, name="update_category_orders"),
 ]

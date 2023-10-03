@@ -21,9 +21,6 @@ import { AuthService } from 'src/app/services/auth.service';
 })
 export class TodoComponent {
     todoForm!: FormGroup;
-    tasks: ITask[] = [];
-    inprogress: ITask[] = [];
-    completed: ITask[] = [];
 
     categories: ICategory[] = [];
     contextMenuTask: ITask | null = null;
@@ -43,45 +40,49 @@ export class TodoComponent {
         this.titleService.setTitle('Todo');
     }
 
-    drop(event: CdkDragDrop<ITask[]>, name: string): void {
-        console.log('drop', event);
-        console.log('name', name);
+    drop(event: CdkDragDrop<ITask[]>): void {
         if (event.previousContainer === event.container) {
+            console.log('drop');
             moveItemInArray(
                 event.container.data,
                 event.previousIndex,
                 event.currentIndex
             );
-            this.saveTask(event.container.data[event.currentIndex]);
             this.updateTaskOrders();
+            this.saveTask(
+                event.container.data[event.currentIndex],
+                event.currentIndex
+            );
         } else {
-            const movedTask = event.previousContainer.data[event.previousIndex];
-            console.log('movedTask', movedTask);
+            console.log('drop else');
             transferArrayItem(
                 event.previousContainer.data,
                 event.container.data,
                 event.previousIndex,
                 event.currentIndex
             );
-            this.saveTask(event.container.data[event.currentIndex]);
             this.updateTaskOrders();
+            this.saveTask(
+                event.container.data[event.currentIndex],
+                event.currentIndex
+            );
         }
     }
 
     private updateTaskOrders(): void {
-        // Update the order of tasks within each category array
-        this.tasks.forEach((task, index) => (task.order = index));
-        this.inprogress.forEach((task, index) => (task.order = index));
-        this.completed.forEach((task, index) => (task.order = index));
+        // Update the order of tasks
+        this.categories.forEach((category) => {
+            category.task.forEach((task, index) => (task.order = index));
+        });
         // Save the updated orders to the backend
-        this.saveTaskOrders([
-            ...this.tasks,
-            ...this.inprogress,
-            ...this.completed,
-        ]);
+        console.log('updateTaskOrders', this.categories);
+        this.saveTaskOrders(
+            this.categories.flatMap((category) => category.task)
+        );
     }
 
     private saveTaskOrders(tasks: ITask[]): void {
+        console.log('saveTaskOrders', tasks);
         const csrfToken = this.getCookie('csrftoken');
         const httpOptions = {
             headers: new HttpHeaders({
@@ -96,12 +97,20 @@ export class TodoComponent {
                 csrfToken
             );
         }
-        console.log('saveTaskOrders');
-        this.httpClient.put<any>(
-            `http://localhost:8000/todo/updateTaskOrders/`,
-            tasks,
-            httpOptions
-        );
+        this.httpClient
+            .put<any>(
+                `http://localhost:8000/todo/updateTaskOrders/`,
+                tasks,
+                httpOptions
+            )
+            .subscribe(
+                (response) => {
+                    console.log(response);
+                },
+                (error) => {
+                    console.error('Error updating task orders:', error);
+                }
+            );
     }
 
     ngOnInit(): void {
@@ -121,6 +130,7 @@ export class TodoComponent {
                 event.previousIndex,
                 event.currentIndex
             );
+            this.updateCategoryOrders();
         } else {
             // If a category was moved from one list to another
             const movedCategory =
@@ -131,6 +141,7 @@ export class TodoComponent {
                 event.previousIndex,
                 event.currentIndex
             );
+            this.updateCategoryOrders();
             // You may need to update the moved category's properties here
             // For example, if you want to update its position or parent category
         }
@@ -159,11 +170,20 @@ export class TodoComponent {
             );
         }
         console.log('saveCategoryOrders');
-        this.httpClient.put<any>(
-            `http://localhost:8000/category/updateCategoryOrders/`,
-            categories,
-            httpOptions
-        );
+        this.httpClient
+            .put<any>(
+                `http://localhost:8000/category/update-category-orders/`,
+                categories,
+                httpOptions
+            )
+            .subscribe(
+                (response) => {
+                    console.log(response);
+                },
+                (error) => {
+                    console.error('Error updating category orders:', error);
+                }
+            );
     }
 
     private getCookie(title: string): string | null {
@@ -213,7 +233,7 @@ export class TodoComponent {
     populateCategoryTasks(tasks: any[]): void {
         // Remove all tasks from each category
         this.categories.forEach((category) => (category.task = []));
-        // Iterate through tasks and add them to their respective categories
+        // Iterate through tasks and add them to their respective categories and order them by positionID
         tasks.forEach((task) => {
             const categoryIndex = this.categories.findIndex(
                 (category) => category.name === task.category
@@ -233,10 +253,13 @@ export class TodoComponent {
                 });
             }
         });
+        // Sort tasks by their order
+        this.categories.forEach((category) => {
+            category.task.sort((a, b) => a.order - b.order);
+        });
     }
 
-    saveTask(task: ITask): void {
-        console.log(task);
+    saveTask(task: ITask, index: number): void {
         const csrfToken = this.getCookie('csrftoken');
 
         const httpOptions = {
@@ -268,10 +291,10 @@ export class TodoComponent {
             update_date: currentDate.toISOString(),
             due_date: task.due_date,
             category: task.category,
-            order: task.order,
+            order: index,
             userID: task.userID,
         };
-        console.log(updatedTask);
+        // console.log('updatedTask', updatedTask);
         this.httpClient
             .put<any>(
                 `http://localhost:8000/todo/updateTask/${task.id}`,
@@ -300,7 +323,7 @@ export class TodoComponent {
     }
 
     deleteTask(task: ITask): void {
-        const taskIndex = this.tasks.findIndex((t) => t === task);
+        // TODO: Rewrite this function to use the new categories array
 
         this.contextMenuTask = null;
 
@@ -324,7 +347,6 @@ export class TodoComponent {
                 httpOptions
             )
             .subscribe((response) => {
-                this.tasks.splice(taskIndex, 1);
                 this.fetchAllTasks();
             });
     }
@@ -350,7 +372,7 @@ export class TodoComponent {
                 task.title = result.title;
                 task.description = result.description;
                 task.due_date = result.dueDate || '';
-                this.saveTask(task);
+                this.saveTask(task, result.order);
             }
         });
     }
@@ -378,11 +400,7 @@ export class TodoComponent {
             if (result) {
                 this.authService.getUserDetails().subscribe((user) => {
                     const userID = user.id;
-                    const maxOrder = [
-                        ...this.tasks,
-                        ...this.inprogress,
-                        ...this.completed,
-                    ].filter((t) => t.category === category).length;
+
                     const newTask: ITask = {
                         id: 0,
                         title: result.title,
@@ -391,7 +409,7 @@ export class TodoComponent {
                         update_date: currentDate.toISOString(),
                         due_date: result.dueDate || '',
                         category: category,
-                        order: maxOrder,
+                        order: 0,
                         userID: userID,
                     };
                     console.log(newTask);
@@ -504,11 +522,39 @@ export class TodoComponent {
                 (response) => {
                     // Populate tasks for each category
                     this.categories = response.categories;
+                    // Order the categories by their order
+                    this.categories.sort((a, b) => a.order - b.order);
+                    console.log(this.categories);
+                    // Fetch all tasks
                     this.fetchAllTasks();
                 },
                 (error) => {
                     console.error('Error fetching categories:', error);
                 }
             );
+    }
+    deleteCategory(category: ICategory): void {
+        const csrfToken = this.getCookie('csrftoken');
+
+        const httpOptions = {
+            headers: new HttpHeaders(),
+            withCredentials: true,
+        };
+
+        if (csrfToken) {
+            httpOptions.headers = httpOptions.headers.append(
+                'X-CSRFToken',
+                csrfToken
+            );
+        }
+
+        this.httpClient
+            .delete<any>(
+                `http://localhost:8000/category/delete-category/${category.id}`,
+                httpOptions
+            )
+            .subscribe((response) => {
+                this.getAllCategories();
+            });
     }
 }
