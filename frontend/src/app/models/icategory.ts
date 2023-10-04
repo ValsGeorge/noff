@@ -5,4 +5,5 @@ export interface ICategory {
     name: string;
     task: ITask[];
     order: number;
+    isEditing: boolean;
 }

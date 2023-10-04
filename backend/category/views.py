@@ -43,9 +43,13 @@ def delete_category(request, category_id):
     
 @csrf_exempt
 def update_category(request, category_id):
+    print("update_category", request, category_id)
     try:
         category = Category.objects.get(id=category_id)
-        name = request.POST['name']
+        print("category", category)
+        data = json.loads(request.body)
+        print("data", data)
+        name = data['name']
         category.name = name
         category.save()
         return JsonResponse({'message': 'Category updated successfully'}, status=200)

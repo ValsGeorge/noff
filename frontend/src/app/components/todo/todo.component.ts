@@ -557,4 +557,34 @@ export class TodoComponent {
                 this.getAllCategories();
             });
     }
+    editCategory(category: ICategory): void {
+        const csrfToken = this.getCookie('csrftoken');
+
+        const httpOptions = {
+            headers: new HttpHeaders({
+                'Content-Type': 'application/json',
+            }),
+            withCredentials: true,
+        };
+
+        const body = { name: category.name };
+
+        if (csrfToken) {
+            httpOptions.headers = httpOptions.headers.append(
+                'X-CSRFToken',
+                csrfToken
+            );
+        }
+
+        this.httpClient
+            .put<any>(
+                `http://localhost:8000/category/update-category/${category.id}`,
+                body,
+                httpOptions
+            )
+            .subscribe((response) => {
+                this.getAllCategories();
+            });
+        category.isEditing = false;
+    }
 }
