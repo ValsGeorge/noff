@@ -59,7 +59,6 @@ def getAllTasks(request, userID):
 
 @csrf_exempt
 def add(request):
-    print(request.POST)
     try:
         title = request.POST['title']
         description = request.POST['description']
@@ -88,18 +87,13 @@ def add(request):
     
 @csrf_exempt
 def updateTaskOrders(request):
-    print("updateTaskOrders request", request)
     try:
         data = json.loads(request.body)
-        print("_________aaaa")
-        print(json.dumps(data, indent=4))
         for task in data:
             # match the task id with the database
             todo = Todo.objects.get(id=task['id'])
-            print("todo", todo)
             # update the positionID
             todo.positionID = task['order']
-            print("positionID", todo.positionID)
             # save the changes
             todo.save()
         return JsonResponse({'message': 'Task updated successfully!'})
@@ -110,7 +104,6 @@ def updateTaskOrders(request):
 
 @csrf_exempt
 def update(request, todo_id):
-    print("request", request)
     try:
         todo = Todo.objects.get(id=todo_id)
     except Todo.DoesNotExist:
@@ -118,7 +111,6 @@ def update(request, todo_id):
 
     if request.method == 'PUT':
         data = json.loads(request.body)
-        print("data", data)
         title = data.get('title')
         description = data.get('description')
         category_name = data.get('category')
@@ -127,20 +119,16 @@ def update(request, todo_id):
         # Check if the category exists or create a new one if it doesn't
         try:
             category = Category.objects.get(name=category_name)
-            print("category", category.name)
         except Category.DoesNotExist:
-            print("category does not exist")
+            return JsonResponse({'error': 'Category not found'}, status=404)
 
-        print("category", category.name, category.id)
         todo.title = title if title is not None else todo.title
         todo.description = description if description is not None else todo.description
         todo.category_id = category.id
         todo.due_date = due_date if due_date is not None else todo.due_date
         todo.positionID = position_id if position_id is not None else todo.positionID
 
-        print("todo", todo.title, todo.description, todo.category_id, todo.due_date, todo.positionID)
 
-        # todo.updated_at = datetime.now(pytz.timezone('Europe/Berlin'))
         todo.save()
 
         return JsonResponse({'message': 'Task updated successfully!'})

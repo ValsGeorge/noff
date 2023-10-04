@@ -42,7 +42,6 @@ export class TodoComponent {
 
     drop(event: CdkDragDrop<ITask[]>): void {
         if (event.previousContainer === event.container) {
-            console.log('drop');
             moveItemInArray(
                 event.container.data,
                 event.previousIndex,
@@ -54,7 +53,6 @@ export class TodoComponent {
                 event.currentIndex
             );
         } else {
-            console.log('drop else');
             transferArrayItem(
                 event.previousContainer.data,
                 event.container.data,
@@ -75,14 +73,12 @@ export class TodoComponent {
             category.task.forEach((task, index) => (task.order = index));
         });
         // Save the updated orders to the backend
-        console.log('updateTaskOrders', this.categories);
         this.saveTaskOrders(
             this.categories.flatMap((category) => category.task)
         );
     }
 
     private saveTaskOrders(tasks: ITask[]): void {
-        console.log('saveTaskOrders', tasks);
         const csrfToken = this.getCookie('csrftoken');
         const httpOptions = {
             headers: new HttpHeaders({
@@ -104,9 +100,7 @@ export class TodoComponent {
                 httpOptions
             )
             .subscribe(
-                (response) => {
-                    console.log(response);
-                },
+                (response) => {},
                 (error) => {
                     console.error('Error updating task orders:', error);
                 }
@@ -122,7 +116,6 @@ export class TodoComponent {
     }
 
     dropCategory(event: CdkDragDrop<ICategory[]>): void {
-        console.log('dropCategory', event);
         if (event.previousContainer === event.container) {
             // If a category was reordered within the same list
             moveItemInArray(
@@ -169,7 +162,6 @@ export class TodoComponent {
                 csrfToken
             );
         }
-        console.log('saveCategoryOrders');
         this.httpClient
             .put<any>(
                 `http://localhost:8000/category/update-category-orders/`,
@@ -177,9 +169,7 @@ export class TodoComponent {
                 httpOptions
             )
             .subscribe(
-                (response) => {
-                    console.log(response);
-                },
+                (response) => {},
                 (error) => {
                     console.error('Error updating category orders:', error);
                 }
@@ -294,7 +284,6 @@ export class TodoComponent {
             order: index,
             userID: task.userID,
         };
-        // console.log('updatedTask', updatedTask);
         this.httpClient
             .put<any>(
                 `http://localhost:8000/todo/updateTask/${task.id}`,
@@ -303,7 +292,6 @@ export class TodoComponent {
             )
             .subscribe(
                 (response) => {
-                    console.log(response);
                     this.fetchAllTasks();
                 },
                 (error) => {
@@ -367,7 +355,6 @@ export class TodoComponent {
         });
 
         dialogRef.afterClosed().subscribe((result) => {
-            console.log(result);
             if (result) {
                 task.title = result.title;
                 task.description = result.description;
@@ -412,7 +399,6 @@ export class TodoComponent {
                         order: 0,
                         userID: userID,
                     };
-                    console.log(newTask);
                     const csrfToken = this.getCookie('csrftoken');
                     const body = new HttpParams()
                         .set('title', newTask.title)
@@ -455,7 +441,6 @@ export class TodoComponent {
     }
     createCategory(): void {
         const newCategoryName = this.newCategoryName;
-        console.log(newCategoryName);
         if (newCategoryName) {
             const newCategory = {
                 name: newCategoryName,
@@ -524,7 +509,6 @@ export class TodoComponent {
                     this.categories = response.categories;
                     // Order the categories by their order
                     this.categories.sort((a, b) => a.order - b.order);
-                    console.log(this.categories);
                     // Fetch all tasks
                     this.fetchAllTasks();
                 },
