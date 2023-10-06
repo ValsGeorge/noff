@@ -346,6 +346,8 @@ export class TodoComponent {
 
     openEditDialog(task: ITask): void {
         const dialogRef = this.dialog.open(EditDialogComponent, {
+            width: '500px',
+            height: '500px',
             data: {
                 title: task.title,
                 description: task.description,
@@ -388,6 +390,15 @@ export class TodoComponent {
                 this.authService.getUserDetails().subscribe((user) => {
                     const userID = user.id;
 
+                    const categoryIndex = this.categories.findIndex(
+                        (c) => c.name === category
+                    );
+                    const categoryTasks = this.categories[categoryIndex].task;
+                    const maxOrder =
+                        categoryTasks.length > 0
+                            ? Math.max(...categoryTasks.map((t) => t.order), 0)
+                            : -1;
+
                     const newTask: ITask = {
                         id: 0,
                         title: result.title,
@@ -396,7 +407,7 @@ export class TodoComponent {
                         update_date: currentDate.toISOString(),
                         due_date: result.dueDate || '',
                         category: category,
-                        order: 0,
+                        order: maxOrder + 1,
                         userID: userID,
                     };
                     const csrfToken = this.getCookie('csrftoken');

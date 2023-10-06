@@ -41,7 +41,7 @@ h2 {
     /* Text color for dark theme */
 }
 
-.form-field input[type='number'],
+.form-field input[type="number"],
 .form-field textarea {
     resize: none;
 }
@@ -114,12 +114,12 @@ h2 {
 .form-field-horizontal label {
     margin-right: 20%;
 }
-input[type="date"] { 
+input[type="date"] {
     background: transparent;
     color: white;
     border: none;
-  }
-  
-  input[type="date"]::-webkit-calendar-picker-indicator {
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
     filter: invert(100%);
-  }
+}

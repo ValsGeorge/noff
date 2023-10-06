@@ -23,7 +23,6 @@
                                         <input type="text" [(ngModel)]="category.name" name="categoryName"
                                             (keydown.enter)="editCategory(category)"
                                             (focusout)="editCategory(category)" />
-                                        <!-- Remove the Save and Cancel buttons -->
                                     </form>
                                 </ng-container>
                                 <button class="delete-btn" (click)="deleteCategory(category)">X</button>

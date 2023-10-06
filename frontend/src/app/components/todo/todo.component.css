@@ -254,7 +254,7 @@ h2 {
     width: 200px;
     min-width: 200px;
     height: 100%;
-    margin-top: 50px;
+    margin-top: 20px;
 }
 .add-new-category input {
     border-radius: 4px;
@@ -304,10 +304,15 @@ h2 {
     height: 30px;
     margin-left: 10px;
     margin-right: 5%;
-    background-color: #e62c2c;
+    background-color: #3b3b3b;
     border: none;
     color: #fff;
     border-radius: 5px;
+    transition: 0.3s ease-in-out;
+}
+
+.delete-btn:hover {
+    background-color: #e62c2c;
 }
 
 /* @media screen and (max-width: 980px) {
