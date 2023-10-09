@@ -30,12 +30,10 @@ export class RegisterComponent {
             this.authService.register(registrationData).subscribe(
                 (response) => {
                     console.log('User is logged in');
-                    // You can redirect the user here to any page you want or just stay on the same page
                     this.router.navigate(['/']);
                 },
                 (error) => {
                     console.log('Error while logging in user', error);
-                    // You can show an error alert here
                 }
             );
             this.router.navigate(['/login']);

@@ -107,7 +107,8 @@ def update(request, todo_id):
     try:
         todo = Todo.objects.get(id=todo_id)
     except Todo.DoesNotExist:
-        return JsonResponse({'error': 'Task not found'}, status=404)
+        # return a json response with an error message with the task name and 404 status code
+        return JsonResponse({'error': f'Task not found'}, status=404)
 
     if request.method == 'PUT':
         data = json.loads(request.body)
@@ -122,14 +123,17 @@ def update(request, todo_id):
         except Category.DoesNotExist:
             return JsonResponse({'error': 'Category not found'}, status=404)
 
-        todo.title = title if title is not None else todo.title
-        todo.description = description if description is not None else todo.description
-        todo.category_id = category.id
-        todo.due_date = due_date if due_date is not None else todo.due_date
-        todo.positionID = position_id if position_id is not None else todo.positionID
+        try:
+            todo.title = title if title is not None else todo.title
+            todo.description = description if description is not None else todo.description
+            todo.category_id = category.id
+            todo.due_date = due_date if due_date != '' else todo.due_date if todo.due_date else None
+            todo.positionID = position_id if position_id is not None else todo.positionID
 
-
-        todo.save()
+            todo.save()
+        except Exception as e:
+            # Other exceptions (e.g., database error)
+            return JsonResponse({'error': str(e)}, status=500)
 
         return JsonResponse({'message': 'Task updated successfully!'})
     else:

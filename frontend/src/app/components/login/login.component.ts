@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
 
 @Component({
     selector: 'app-login',
@@ -10,11 +11,14 @@ import { Router } from '@angular/router';
 })
 export class LoginComponent {
     loginForm: FormGroup;
+    showToast = false;
+    messages: any[] = [];
 
     constructor(
         private fb: FormBuilder,
         private authService: AuthService,
-        private router: Router
+        private router: Router,
+        private messageService: MessageService
     ) {
         this.loginForm = this.fb.group({
             username: ['', Validators.required],
@@ -27,20 +31,19 @@ export class LoginComponent {
             const loginData = this.loginForm.value;
             this.authService.login(loginData).subscribe(
                 (response) => {
-                    // You can redirect the user here to any page you want or just stay on the same page
+                    // Redirect to the home page immediately
                     this.router.navigate(['/']);
+
+                    // Set a timeout to display the toast after the redirection
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: 'Connected successfully',
+                    });
                 },
                 (error) => {
                     console.log('Error while logging in user', error);
-                    if (error.status === 401) {
-                        // Handle unauthorized (invalid credentials) error
-                        // For example, show an error message to the user
-                        // this.errorMessage = 'Invalid credentials. Please try again.';
-                    } else {
-                        // Handle other errors (e.g., server error)
-                        // For example, show a generic error message to the user
-                        // this.errorMessage = 'An error occurred. Please try again later.';
-                    }
+                    // Handle login error
                 }
             );
         }

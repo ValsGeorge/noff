@@ -1,0 +1,5 @@
+.actions {
+    /* orient them to the right  */
+    display: flex;
+    justify-content: flex-end;
+}

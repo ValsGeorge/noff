@@ -11,9 +11,11 @@ import { MatDialog } from '@angular/material/dialog';
 import { ITask } from '../../models/itask';
 import { ICategory } from '../../models/icategory';
 import { EditDialogComponent } from '../edit-dialog/edit-dialog.component';
-const currentDate: Date = new Date();
 import { Title } from '@angular/platform-browser';
 import { AuthService } from 'src/app/services/auth.service';
+import { MessageService } from 'primeng/api';
+import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
+const currentDate: Date = new Date();
 @Component({
     selector: 'app-todo',
     templateUrl: './todo.component.html',
@@ -35,7 +37,8 @@ export class TodoComponent {
         private dialog: MatDialog,
         private httpClient: HttpClient,
         private titleService: Title,
-        private authService: AuthService
+        private authService: AuthService,
+        private messageService: MessageService
     ) {
         this.titleService.setTitle('Todo');
     }
@@ -93,18 +96,11 @@ export class TodoComponent {
                 csrfToken
             );
         }
-        this.httpClient
-            .put<any>(
-                `http://localhost:8000/todo/updateTaskOrders/`,
-                tasks,
-                httpOptions
-            )
-            .subscribe(
-                (response) => {},
-                (error) => {
-                    console.error('Error updating task orders:', error);
-                }
-            );
+        this.httpClient.put<any>(
+            `http://localhost:8000/todo/updateTaskOrders/`,
+            tasks,
+            httpOptions
+        );
     }
 
     ngOnInit(): void {
@@ -135,8 +131,6 @@ export class TodoComponent {
                 event.currentIndex
             );
             this.updateCategoryOrders();
-            // You may need to update the moved category's properties here
-            // For example, if you want to update its position or parent category
         }
     }
 
@@ -162,18 +156,11 @@ export class TodoComponent {
                 csrfToken
             );
         }
-        this.httpClient
-            .put<any>(
-                `http://localhost:8000/category/update-category-orders/`,
-                categories,
-                httpOptions
-            )
-            .subscribe(
-                (response) => {},
-                (error) => {
-                    console.error('Error updating category orders:', error);
-                }
-            );
+        this.httpClient.put<any>(
+            `http://localhost:8000/category/update-category-orders/`,
+            categories,
+            httpOptions
+        );
     }
 
     private getCookie(title: string): string | null {
@@ -293,10 +280,15 @@ export class TodoComponent {
             .subscribe(
                 (response) => {
                     this.fetchAllTasks();
+                    setTimeout(() => {
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Success',
+                            detail: 'Task updated successfully',
+                        });
+                    }, 0);
                 },
-                (error) => {
-                    console.error('Error updating task:', error);
-                }
+                (error) => {}
             );
     }
 
@@ -441,9 +433,7 @@ export class TodoComponent {
                             (response) => {
                                 this.todoForm.reset();
                             },
-                            (error) => {
-                                console.error('Error adding task:', error);
-                            }
+                            (error) => {}
                         );
                 });
                 this.fetchAllTasks();
@@ -529,6 +519,27 @@ export class TodoComponent {
             );
     }
     deleteCategory(category: ICategory): void {
+        if (category.task.length > 0) {
+            const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+                data: {
+                    message:
+                        'This category has tasks. Are you sure you want to delete it?',
+                },
+            });
+
+            dialogRef.afterClosed().subscribe((result) => {
+                if (result) {
+                    // User confirmed deletion, proceed with deletion
+                    this.performCategoryDeletion(category);
+                }
+            });
+        } else {
+            // No tasks associated with the category, proceed with deletion
+            this.performCategoryDeletion(category);
+        }
+    }
+
+    performCategoryDeletion(category: ICategory): void {
         const csrfToken = this.getCookie('csrftoken');
 
         const httpOptions = {
@@ -548,10 +559,17 @@ export class TodoComponent {
                 `http://localhost:8000/category/delete-category/${category.id}`,
                 httpOptions
             )
-            .subscribe((response) => {
-                this.getAllCategories();
+            .subscribe({
+                next: (response) => {
+                    // Category deleted successfully, update the category list
+                    this.getAllCategories();
+                },
+                error: (error) => {
+                    console.error('Error deleting category:', error);
+                },
             });
     }
+
     editCategory(category: ICategory): void {
         const csrfToken = this.getCookie('csrftoken');
 

@@ -30,6 +30,9 @@ import { RegisterComponent } from './components/register/register.component';
 import { AccountActivationComponent } from './components/account-activation/account-activation.component';
 import { HomeComponent } from './components/home/home.component';
 import { ProfileComponent } from './components/profile/profile.component';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
+import { ConfirmationDialogComponent } from './components/confirmation-dialog/confirmation-dialog.component';
 
 @NgModule({
     declarations: [
@@ -45,6 +48,7 @@ import { ProfileComponent } from './components/profile/profile.component';
         AccountActivationComponent,
         HomeComponent,
         ProfileComponent,
+        ConfirmationDialogComponent,
     ],
     imports: [
         BrowserModule,
@@ -64,8 +68,9 @@ import { ProfileComponent } from './components/profile/profile.component';
         MatOptionModule,
         HttpClientModule,
         MatSlideToggleModule,
+        ToastModule,
     ],
-    providers: [],
+    providers: [MessageService],
     bootstrap: [AppComponent],
 })
 export class AppModule {}
