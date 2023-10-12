@@ -13,7 +13,6 @@ import { ICategory } from '../../models/icategory';
 import { EditDialogComponent } from '../edit-dialog/edit-dialog.component';
 import { Title } from '@angular/platform-browser';
 import { AuthService } from 'src/app/services/auth.service';
-import { MessageService } from 'primeng/api';
 import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
 const currentDate: Date = new Date();
 @Component({
@@ -23,7 +22,6 @@ const currentDate: Date = new Date();
 })
 export class TodoComponent {
     todoForm!: FormGroup;
-
     categories: ICategory[] = [];
     contextMenuTask: ITask | null = null;
     contextMenuX = 0;
@@ -37,8 +35,7 @@ export class TodoComponent {
         private dialog: MatDialog,
         private httpClient: HttpClient,
         private titleService: Title,
-        private authService: AuthService,
-        private messageService: MessageService
+        private authService: AuthService
     ) {
         this.titleService.setTitle('Todo');
     }
@@ -280,13 +277,6 @@ export class TodoComponent {
             .subscribe(
                 (response) => {
                     this.fetchAllTasks();
-                    setTimeout(() => {
-                        this.messageService.add({
-                            severity: 'success',
-                            summary: 'Success',
-                            detail: 'Task updated successfully',
-                        });
-                    }, 0);
                 },
                 (error) => {}
             );
@@ -303,8 +293,6 @@ export class TodoComponent {
     }
 
     deleteTask(task: ITask): void {
-        // TODO: Rewrite this function to use the new categories array
-
         this.contextMenuTask = null;
 
         const csrfToken = this.getCookie('csrftoken');
@@ -339,7 +327,6 @@ export class TodoComponent {
     openEditDialog(task: ITask): void {
         const dialogRef = this.dialog.open(EditDialogComponent, {
             width: '500px',
-            height: '500px',
             data: {
                 title: task.title,
                 description: task.description,

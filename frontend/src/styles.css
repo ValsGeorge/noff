@@ -1,7 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
 @import "~@fortawesome/fontawesome-free/css/all.css";
 @import "~primeicons/primeicons.css";
-@import "~primeng/resources/themes/saga-blue/theme.css"; /* Replace 'saga-blue' with your chosen theme */
+@import "~primeng/resources/themes/saga-blue/theme.css";
 @import "~primeng/resources/primeng.min.css";
 
 html,
@@ -11,17 +11,4 @@ body {
 body {
     margin: 0;
     font-family: Roboto, "Helvetica Neue", sans-serif;
-}
-.custom-toast .ui-toast {
-    position: fixed;
-    top: 20%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 50%;
-    background-color: red;
-}
-
-.custom-toast .ui-toast-message-content {
-    font-family: "Courier New", Courier, monospace;
-    background: #ffd07b;
 }

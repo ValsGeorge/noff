@@ -121,7 +121,7 @@ def generate_expiration_time():
     return timezone.now() + timedelta(days=1)
 
 def generate_code(user_id):
-    if ShareCode.objects.filter(user=user_id).exists():
+    if ShareCode.objects.filter(user=user_id).exists() and ShareCode.objects.filter(user=user_id).last().expires > timezone.now():
         share_code = ShareCode.objects.filter(user=user_id).last()
         return share_code
     code = generate_unique_share_code()

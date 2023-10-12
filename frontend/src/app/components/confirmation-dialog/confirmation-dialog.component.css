@@ -3,3 +3,6 @@
     display: flex;
     justify-content: flex-end;
 }
+.wrapper {
+    background-color: #252525;
+}
