@@ -8,10 +8,10 @@
   <!-- Display navigation links -->
   <nav class="nav-links">
     <a routerLink="/">Home</a>
-    <a routerLink="/todo">Todo</a>
 
     <!-- Display user info if user is logged in -->
     <span *ngIf="isLoggedIn$ | async" class="user-info">
+      <a routerLink="/todo">Todo</a>
       <a routerLink="/profile">{{ username }}</a>
       <a (click)="logout()">Logout</a>
     </span>

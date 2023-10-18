@@ -33,6 +33,7 @@ import { ProfileComponent } from './components/profile/profile.component';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { ConfirmationDialogComponent } from './components/confirmation-dialog/confirmation-dialog.component';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @NgModule({
     declarations: [
@@ -69,6 +70,7 @@ import { ConfirmationDialogComponent } from './components/confirmation-dialog/co
         HttpClientModule,
         MatSlideToggleModule,
         ToastModule,
+        MatProgressSpinnerModule,
     ],
     providers: [MessageService],
     bootstrap: [AppComponent],

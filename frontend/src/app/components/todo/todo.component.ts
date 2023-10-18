@@ -390,16 +390,18 @@ export class TodoComponent {
                         userID: userID,
                     };
                     const csrfToken = this.getCookie('csrftoken');
-                    const body = new HttpParams()
-                        .set('title', newTask.title)
-                        .set('description', newTask.description)
-                        .set('category', newTask.category)
-                        .set('order', newTask.order.toString())
-                        .set('userID', newTask.userID.toString())
-                        .set('due_date', newTask.due_date.toString());
+
+                    const body = {
+                        title: newTask.title,
+                        description: newTask.description,
+                        category: newTask.category,
+                        order: newTask.order,
+                        userID: newTask.userID,
+                        due_date: newTask.due_date,
+                    };
                     const httpOptions = {
                         headers: new HttpHeaders({
-                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'Content-Type': 'application/json',
                         }),
                         withCredentials: true,
                     };
@@ -413,7 +415,7 @@ export class TodoComponent {
                     this.httpClient
                         .post<any>(
                             'http://localhost:8000/todo/add/',
-                            body.toString(),
+                            body,
                             httpOptions
                         )
                         .subscribe(
@@ -434,40 +436,44 @@ export class TodoComponent {
                 name: newCategoryName,
                 task: [],
             };
+            this.authService.getUserDetails().subscribe((user) => {
+                const userID = user.id;
+                const csrfToken = this.getCookie('csrftoken');
 
-            const csrfToken = this.getCookie('csrftoken');
+                const httpOptions = {
+                    headers: new HttpHeaders({
+                        'Content-Type': 'application/json',
+                    }),
+                    withCredentials: true,
+                };
+                const body = {
+                    name: newCategoryName,
+                    userID: userID,
+                };
 
-            const body = new HttpParams().set('name', newCategory.name);
+                if (csrfToken) {
+                    httpOptions.headers = httpOptions.headers.append(
+                        'X-CSRFToken',
+                        csrfToken
+                    );
+                }
 
-            const httpOptions = {
-                headers: new HttpHeaders({
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                }),
-                withCredentials: true,
-            };
-
-            if (csrfToken) {
-                httpOptions.headers = httpOptions.headers.append(
-                    'X-CSRFToken',
-                    csrfToken
-                );
-            }
-
-            this.httpClient
-                .post<any>(
-                    'http://localhost:8000/category/create-category/',
-                    body.toString(),
-                    httpOptions
-                )
-                .subscribe(
-                    (response) => {
-                        this.newCategoryName = '';
-                        this.getAllCategories();
-                    },
-                    (error) => {
-                        console.error('Error adding category:', error);
-                    }
-                );
+                this.httpClient
+                    .post<any>(
+                        'http://localhost:8000/category/create-category/',
+                        body,
+                        httpOptions
+                    )
+                    .subscribe(
+                        (response) => {
+                            this.newCategoryName = '';
+                            this.getAllCategories();
+                        },
+                        (error) => {
+                            console.error('Error adding category:', error);
+                        }
+                    );
+            });
         }
     }
 
@@ -475,7 +481,9 @@ export class TodoComponent {
         const csrfToken = this.getCookie('csrftoken');
 
         const httpOptions = {
-            headers: new HttpHeaders(),
+            headers: new HttpHeaders({
+                'Content-Type': 'application/json',
+            }),
             withCredentials: true,
         };
 
@@ -486,24 +494,28 @@ export class TodoComponent {
             );
         }
 
-        this.httpClient
-            .get<any>(
-                'http://localhost:8000/category/get-all-categories/',
-                httpOptions
-            )
-            .subscribe(
-                (response) => {
-                    // Populate tasks for each category
-                    this.categories = response.categories;
-                    // Order the categories by their order
-                    this.categories.sort((a, b) => a.order - b.order);
-                    // Fetch all tasks
-                    this.fetchAllTasks();
-                },
-                (error) => {
-                    console.error('Error fetching categories:', error);
-                }
-            );
+        this.authService.getUserDetails().subscribe((user) => {
+            const userID = user.id;
+
+            this.httpClient
+                .get<any>(
+                    `http://localhost:8000/category/get-all-categories/${userID}`,
+                    httpOptions
+                )
+                .subscribe(
+                    (response) => {
+                        // Populate tasks for each category
+                        this.categories = response.categories;
+                        // Order the categories by their order
+                        this.categories.sort((a, b) => a.order - b.order);
+                        // Fetch all tasks
+                        this.fetchAllTasks();
+                    },
+                    (error) => {
+                        console.error('Error fetching categories:', error);
+                    }
+                );
+        });
     }
     deleteCategory(category: ICategory): void {
         if (category.task.length > 0) {
@@ -567,24 +579,33 @@ export class TodoComponent {
             withCredentials: true,
         };
 
-        const body = { name: category.name };
+        // get the user id
+        this.authService.getUserDetails().subscribe((user) => {
+            const userID = user.id;
 
-        if (csrfToken) {
-            httpOptions.headers = httpOptions.headers.append(
-                'X-CSRFToken',
-                csrfToken
-            );
-        }
+            const body = {
+                id: category.id,
+                name: category.name,
+                userID: userID,
+            };
 
-        this.httpClient
-            .put<any>(
-                `http://localhost:8000/category/update-category/${category.id}`,
-                body,
-                httpOptions
-            )
-            .subscribe((response) => {
-                this.getAllCategories();
-            });
-        category.isEditing = false;
+            if (csrfToken) {
+                httpOptions.headers = httpOptions.headers.append(
+                    'X-CSRFToken',
+                    csrfToken
+                );
+            }
+
+            this.httpClient
+                .put<any>(
+                    `http://localhost:8000/category/update-category/`,
+                    body,
+                    httpOptions
+                )
+                .subscribe((response) => {
+                    this.getAllCategories();
+                });
+            category.isEditing = false;
+        });
     }
 }

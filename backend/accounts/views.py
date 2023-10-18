@@ -1,3 +1,4 @@
+from django.utils import timezone  # Import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -15,7 +16,7 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
+from timer.models import Timer
 
 @api_view(['POST'])
 def register(request):
@@ -35,7 +36,7 @@ def register(request):
 
         user = User(username=username, email=email)
         user.set_password(password)
-        user.is_active = True
+        user.is_active = False
         user.save()
 
         # Welcome email
@@ -77,14 +78,12 @@ def login(request):
 
         if username is None or password is None:
             return Response({'error': 'Please provide all required fields'}, status=status.HTTP_400_BAD_REQUEST)
-        # manually authenticate user for test
-
 
         user = authenticate(username=username, password=password)
-        print("user", user)
         if user is not None:
             token, _ = Token.objects.get_or_create(user=user)
-            print("token", token)
+            user.last_login = timezone.now()
+            user.save()
             return Response({
                 'success': 'Logged in successfully',
                 'token': f'{token.key}',  # Convert the token object to a string
@@ -103,10 +102,13 @@ def activate_account(request, uidb64, token):
         if generate_token.check_token(user, token):
             user.is_active = True
             user.save()
+            # add pomodoro timer settings for the user
+            Timer.objects.create(user=user, workMinutes=25, workSeconds=0, breakMinutes=5, breakSeconds=0)
             return Response({'success': 'Your account has been activated. You can now log in.'}, status=status.HTTP_200_OK)
         else:
-            return Response({'error': 'Activation link is invalid or has expired.'}, status=status.HTTP_400_BAD_REQUEST)
-    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({'error': 'Activation link is invalid or has expired1.'}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        print("Exception", e)
         return Response({'error': 'Activation link is invalid or has expired.'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])

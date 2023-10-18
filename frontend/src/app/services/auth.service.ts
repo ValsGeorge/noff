@@ -15,7 +15,7 @@ import {
     providedIn: 'root',
 })
 export class AuthService implements CanActivate {
-    private baseUrl = 'http://localhost:8000/accounts'; // Replace with your Django API base URL
+    private baseUrl = 'http://localhost:8000/accounts';
     private authTokenKey = 'authToken'; // Key for storing the token in localStorage
 
     // Use BehaviorSubject to track login status changes
@@ -33,9 +33,6 @@ export class AuthService implements CanActivate {
     }
 
     private checkLoginStatus(): boolean {
-        // Replace this with your actual authentication logic
-        // For demonstration purposes, we'll simulate login status using a boolean property
-        // You may replace this with your actual logic, e.g., checking for JWT, session, etc.
         const token = this.getAuthTokenFromLocalStorage();
         return !!token;
     }
@@ -65,7 +62,7 @@ export class AuthService implements CanActivate {
     }
 
     private clearLocalStorage(): void {
-        localStorage.removeItem('userData');
+        localStorage.removeItem(this.authTokenKey);
     }
 
     register(userData: any): Observable<any> {
@@ -80,15 +77,12 @@ export class AuthService implements CanActivate {
         const url = `${this.baseUrl}/login/`;
         return this.http.post(url, loginData).pipe(
             tap((response: any) => {
-                // Assuming login is successful, set the isLoggedInValue to true and store the user data
                 this.isLoggedInValue = true;
                 this.usernameSubject.next(response.username);
                 const token = response.token;
                 this.setAuthTokenInLocalStorage(token);
             }),
             catchError((error) => {
-                // Handle login error, e.g., show an error message
-                // Reset the isLoggedInValue to false on login failure
                 this.isLoggedInValue = false;
                 this.clearLocalStorage();
                 return of(error);
@@ -97,6 +91,7 @@ export class AuthService implements CanActivate {
     }
 
     logout(): void {
+        console.log('Logout');
         // Clear the authentication token, username, and user ID from localStorage
         this.clearLocalStorage();
 

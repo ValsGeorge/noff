@@ -194,16 +194,12 @@ def connect_with_code(request):
 @csrf_exempt
 def check_if_in_room(request, user_id):
     userID = user_id
-    print(request.POST)
-    print(userID)
     try:
         user = User.objects.get(id=userID)
         if Connection.objects.filter(receiver=user).exists():
             # get the pomodoro timer of the host in order to match the timer of ther user with the host's timer
             pomodoro_timer = Pomodoro.objects.get(user=Connection.objects.filter(receiver=user).last().sender)
-            is_host = Connection.objects.filter(receiver=user).last().sender.id == user.id
-            print("is_host", is_host)
-            
+            is_host = Connection.objects.filter(receiver=user).last().sender.id == user.id            
             return JsonResponse({'sucess': 'success', 'share_code': Connection.objects.filter(receiver=user).last().shareCode.code, 'is_host': is_host, 'pomodoro_timer': {'workMinutes': pomodoro_timer.workMinutes, 'workSeconds': pomodoro_timer.workSeconds, 'breakMinutes': pomodoro_timer.breakMinutes, 'breakSeconds': pomodoro_timer.breakSeconds}}, status=200)
         else:
             return JsonResponse({'error': 'User not found in any room'}, status=404)

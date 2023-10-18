@@ -7,15 +7,20 @@ import { TodoComponent } from './components/todo/todo.component';
 import { AccountActivationComponent } from './components/account-activation/account-activation.component';
 import { HomeComponent } from './components/home/home.component';
 import { ProfileComponent } from './components/profile/profile.component';
+import { AuthGuard } from './auth/auth.guard';
 
 const routes: Routes = [
-    { path: '', component:HomeComponent, data: { title: 'Home' } },
+    { path: '', component: HomeComponent, data: { title: 'Home' } },
     { path: 'register', component: RegisterComponent },
     { path: 'login', component: LoginComponent },
-    { path: 'profile', component: ProfileComponent, data: { title: 'Profile' } },
-    { path: 'todo', component: TodoComponent },
+    {
+        path: 'profile',
+        component: ProfileComponent,
+        data: { title: 'Profile' },
+        canActivate: [AuthGuard],
+    },
+    { path: 'todo', component: TodoComponent, canActivate: [AuthGuard] },
     { path: 'activate/:uidb64/:token', component: AccountActivationComponent },
-
 ];
 
 @NgModule({

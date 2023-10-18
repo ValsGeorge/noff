@@ -1,16 +1,18 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { MessageService } from 'primeng/api';
 
 @Component({
     selector: 'app-account-activation',
-    template: '<div>Loading...</div>',
+    template: '<div></div>',
 })
 export class AccountActivationComponent {
     constructor(
         private authService: AuthService,
         private route: ActivatedRoute,
-        private router: Router
+        private router: Router,
+        private messageService: MessageService
     ) {
         this.activateAccount();
     }
@@ -23,23 +25,24 @@ export class AccountActivationComponent {
         if (uidb64 !== null && token !== null) {
             this.authService.activateAccount(uidb64, token).subscribe(
                 (response) => {
-                    console.log('Account activated successfully:', response);
-                    // Optionally, you can show a success message to the user
-                    // this.showMessageToUser('Account activated successfully');
-                    // Redirect to the login page or any other desired action
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: 'Account activated successfully',
+                    });
                     this.router.navigate(['/login']);
                 },
                 (error) => {
-                    console.error('Error activating account:', error);
-                    // Optionally, you can show an error message to the user
-                    // this.showMessageToUser('Account activation failed');
-                    // Redirect to an error page or any other desired action
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'Error while activating account',
+                    });
                     this.router.navigate(['/error']);
                 }
             );
         } else {
             console.error('Invalid activation link: uidb64 or token is null');
-            // Redirect to an error page or any other desired action
             this.router.navigate(['/error']);
         }
     }

@@ -60,13 +60,15 @@ def getAllTasks(request, userID):
 @csrf_exempt
 def add(request):
     try:
-        title = request.POST['title']
-        description = request.POST['description']
-        category = request.POST['category']
-        user_id = request.POST['userID']
-        positionID = request.POST['order']
+        data = json.loads(request.body)
+        title = data['title']
+        description = data['description']
+        category = data['category']
+        positionID = data['order']
+        user_id = data['userID']
+
         user = User.objects.get(id=user_id)
-        due_date = request.POST['due_date']
+        due_date = data['due_date']
 
         # find the category using the category name provided in the request
         category = Category.objects.get(name=category)
