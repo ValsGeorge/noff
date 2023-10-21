@@ -1,15 +1,17 @@
 # timer/views.py
-from datetime import timedelta, timezone
+from datetime import timedelta, timezone, datetime
+import json
 import random
 import string
 from django.http import JsonResponse
-from .models import Pomodoro, ShareCode, Timer, Connection
+from .models import Pomodoro, ShareCode,  Connection, Session
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import timedelta
-from rest_framework import status
-from rest_framework.response import Response
+from django.db.models.functions import TruncDate
+from django.db.models import Sum
+
 
 def index(request):
     return JsonResponse({'message': 'Hello, world!'})
@@ -70,44 +72,104 @@ def save_preset(request):
     except Pomodoro.DoesNotExist:
         return JsonResponse({'message': 'fail'})
     
+# # Generate fake data for testing
+# PS: the graph looks really cool ngl
+# for i in range(1, 10):
+#     user = User.objects.get(id=19)
+#     start_time = timezone.now() - timedelta(days=timezone.now().day - random.randint(1, timezone.now().day), hours=random.randint(0, 23), minutes=random.randint(0, 59), seconds=random.randint(0, 59))
+#     end_time = start_time + timedelta(minutes=random.randint(30, 50), seconds=random.randint(0, 59))
+#     session_minutes = (end_time - start_time).seconds // 60
+#     session_seconds = (end_time - start_time).seconds % 60
+#     session = Session(user=user, session_type='study', start_time=start_time, end_time=end_time, session_minutes=session_minutes, session_seconds=session_seconds)
+#     session.save()
+#     start_time = end_time
+#     end_time = start_time + timedelta(minutes=5)
+#     session_minutes = (end_time - start_time).seconds // 60
+#     session_seconds = (end_time - start_time).seconds % 60
+#     session = Session(user=user, session_type='break', start_time=start_time, end_time=end_time, session_minutes=session_minutes, session_seconds=session_seconds)
+#     session.save()
+
+    
 
 @csrf_exempt
-def save_timer(request):
+def save_session(request):
     print(request.POST)
-    user_id = request.POST.get('userId')
-    workMinutes = request.POST.get('workMinutes')
-    workSeconds = request.POST.get('workSeconds')
-    breakMinutes = request.POST.get('breakMinutes')
-    breakSeconds = request.POST.get('breakSeconds')
-    # add every record to database
+    data = json.loads(request.body)
+    user_id = data['userID']
+    session_type = data['sessionData']['sessionType']
+    start_time_str = data['sessionData']['startTime']
+    end_time_str = data['sessionData']['endTime']
+    start_time = datetime.strptime(start_time_str, '%Y-%m-%dT%H:%M:%S.%fZ')
+    end_time = datetime.strptime(end_time_str, '%Y-%m-%dT%H:%M:%S.%fZ')
+    session_minutes = data['sessionData']['sessionMinutes']
+    session_seconds = data['sessionData']['sessionSeconds']
+
+    formatted_start_time = start_time.strftime('%Y-%m-%d %H:%M:%S')
+    formatted_end_time = end_time.strftime('%Y-%m-%d %H:%M:%S')
+
     try:
         user = User.objects.get(id=user_id)
-        timer = Timer(user=user, workMinutes=workMinutes, workSeconds=workSeconds, breakMinutes=breakMinutes, breakSeconds=breakSeconds)
-        timer.save()
+        
+        session = Session(user=user, session_type=session_type, start_time=formatted_start_time, end_time=formatted_end_time, session_minutes=session_minutes, session_seconds=session_seconds)
+        session.save()
         return JsonResponse({'message': 'success'})
-    except Timer.DoesNotExist:
+    except User.DoesNotExist:
         return JsonResponse({'message': 'fail'})
     
-
 @csrf_exempt
-def get_timer(request, user_id):
+def get_session(request, user_id):
     try:
-        user_timers = Timer.objects.filter(user=user_id)
-        timer_data = []
+        session_data = Session.objects.annotate(
+            session_date=TruncDate('start_time')
+        ).values('session_type', 'session_date').annotate(
+            total_minutes=Sum('session_minutes'),
+            total_seconds=Sum('session_seconds')
+        )
 
-        for timer in user_timers:
-            timer_data.append({
-                'user': timer.user_id,
-                'workMinutes': timer.workMinutes,
-                'workSeconds': timer.workSeconds,
-                'breakMinutes': timer.breakMinutes,
-                'breakSeconds': timer.breakSeconds,
-            })
+        study_sessions = {}
+        break_sessions = {}
 
-        return JsonResponse(timer_data, safe=False)
-    except Timer.DoesNotExist:
-        return JsonResponse({'message': 'fail'})
-    
+        for session in session_data:
+            session_type = session['session_type']
+            session_date = session['session_date']
+            total_minutes = session['total_minutes']
+            total_seconds = session['total_seconds']
+
+            if session_type == 'study':
+                if session_date in study_sessions:
+                    study_sessions[session_date]['total_minutes'] += total_minutes
+                    study_sessions[session_date]['total_seconds'] += total_seconds
+                else:
+                    study_sessions[session_date] = {
+                        'total_minutes': total_minutes,
+                        'total_seconds': total_seconds
+                    }
+            elif session_type == 'break':
+                if session_date in break_sessions:
+                    break_sessions[session_date]['total_minutes'] += total_minutes
+                    break_sessions[session_date]['total_seconds'] += total_seconds
+                else:
+                    break_sessions[session_date] = {
+                        'total_minutes': total_minutes,
+                        'total_seconds': total_seconds
+                    }
+
+        study_list = [{'session_date': date, 'total_minutes': data['total_minutes'], 'total_seconds': data['total_seconds']} for date, data in study_sessions.items()]
+        break_list = [{'session_date': date, 'total_minutes': data['total_minutes'], 'total_seconds': data['total_seconds']} for date, data in break_sessions.items()]
+
+        for item in study_list:
+            item['total_minutes'] += item['total_seconds'] // 60
+            item['total_seconds'] = item['total_seconds'] % 60
+
+        for item in break_list:
+            item['total_minutes'] += item['total_seconds'] // 60
+            item['total_seconds'] = item['total_seconds'] % 60
+
+        return JsonResponse({'study': study_list, 'break': break_list}, safe=False)
+    except Session.DoesNotExist:
+        return JsonResponse({'message': 'No study sessions found'})
+
+ 
 
 def generate_unique_share_code():
     # Generate a unique share code

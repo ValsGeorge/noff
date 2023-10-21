@@ -11,7 +11,6 @@ class TimerConsumer(AsyncWebsocketConsumer):
 
         self.share_code = self.scope['url_route']['kwargs']['share_code']
         self.share_group_name = f'timer_{self.share_code}'
-        print('______________________________TimerConsumer connect\n', self.share_group_name)
         # Join share group
         await self.channel_layer.group_add(
             self.share_group_name,
@@ -24,7 +23,6 @@ class TimerConsumer(AsyncWebsocketConsumer):
         }))
 
     async def disconnect(self, close_code):
-        print('______________________________TimerConsumer disconnect\n', close_code)
         await self.channel_layer.group_discard(
             self.share_group_name,
             self.channel_name
@@ -71,7 +69,6 @@ class TimerConsumer(AsyncWebsocketConsumer):
                 }
             )
         elif data['action'] == 'set_timer':
-            # Broadcast the "set_timer" action to all users in the group
             await self.channel_layer.group_send(
                 self.share_group_name,
                 {
@@ -80,6 +77,10 @@ class TimerConsumer(AsyncWebsocketConsumer):
                     'workSeconds': data['settings']['workSeconds'],
                     'breakMinutes': data['settings']['breakMinutes'],
                     'breakSeconds': data['settings']['breakSeconds'],
+                    'minutes': data['settings']['minutes'],
+                    'seconds': data['settings']['seconds'],
+                    'timerActive': data['settings']['timerActive'],
+                    'isWorkInterval': data['settings']['isWorkInterval'],
                 }
             )
         else:
@@ -113,4 +114,8 @@ class TimerConsumer(AsyncWebsocketConsumer):
             'workSeconds': event['workSeconds'],
             'breakMinutes': event['breakMinutes'],
             'breakSeconds': event['breakSeconds'],
+            'minutes': event['minutes'],
+            'seconds': event['seconds'],
+            'timerActive': event['timerActive'],
+            'isWorkInterval': event['isWorkInterval'],
         }))

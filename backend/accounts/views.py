@@ -16,7 +16,7 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from timer.models import Timer
+from timer.models import Pomodoro
 
 @api_view(['POST'])
 def register(request):
@@ -103,7 +103,7 @@ def activate_account(request, uidb64, token):
             user.is_active = True
             user.save()
             # add pomodoro timer settings for the user
-            Timer.objects.create(user=user, workMinutes=25, workSeconds=0, breakMinutes=5, breakSeconds=0)
+            Pomodoro.objects.create(user=user, workMinutes=25, workSeconds=0, breakMinutes=5, breakSeconds=0)
             return Response({'success': 'Your account has been activated. You can now log in.'}, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'Activation link is invalid or has expired1.'}, status=status.HTTP_400_BAD_REQUEST)

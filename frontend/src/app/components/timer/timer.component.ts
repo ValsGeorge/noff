@@ -9,6 +9,7 @@ import {
     animate,
 } from '@angular/animations';
 import { ITimer } from '../../models/itimer';
+import { ISession } from '../../models/isession';
 import { HttpHeaders, HttpParams } from '@angular/common/http';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -52,6 +53,16 @@ export class TimerComponent implements OnInit {
     autoRestart: boolean = true;
     timerActive: boolean = false;
     room: string = '';
+    sessions: ISession[] = [];
+
+    sessionData: ISession = {
+        userId: 0,
+        sessionType: '',
+        startTime: new Date(),
+        endTime: new Date(),
+        sessionMinutes: 0,
+        sessionSeconds: 0,
+    };
 
     private socket$: WebSocketSubject<any> | undefined;
 
@@ -71,18 +82,15 @@ export class TimerComponent implements OnInit {
     isHost: boolean = false;
 
     private setupWebSocket(userID: number, shareCode: string): void {
-        console.log('setupWebSocket');
         this.socket$ = new WebSocketSubject({
             url: `ws://localhost:8000/ws/timer/${shareCode}/`,
         });
         if (this.socket$ && !this.socket$.closed) {
-            console.log('shareCode', shareCode);
             this.room = shareCode;
         }
         this.socket$.subscribe(
             (data) => {
                 // Handle WebSocket data (timer updates)
-                console.log('data', data);
                 if (data.action === 'start') {
                     this.startTimer();
                 } else if (data.action === 'pause') {
@@ -90,7 +98,6 @@ export class TimerComponent implements OnInit {
                 } else if (data.action === 'reset') {
                     this.resetTimer();
                 } else if (data.action === 'set_timer') {
-                    console.log('set_timer');
                     if (this.isHost) {
                         this.sendUpdateTimer();
                     }
@@ -100,8 +107,14 @@ export class TimerComponent implements OnInit {
                         this.workSeconds = data.workSeconds;
                         this.breakMinutes = data.breakMinutes;
                         this.breakSeconds = data.breakSeconds;
-                        this.minutes = data.workMinutes;
-                        this.seconds = data.workSeconds;
+                        this.minutes = data.minutes;
+                        this.seconds = data.seconds;
+                        this.isWorkInterval = data.isWorkInterval;
+                        if (data.timerActive) {
+                            this.startTimer();
+                        } else {
+                            this.pauseTimer();
+                        }
                     }
                 }
             },
@@ -117,6 +130,10 @@ export class TimerComponent implements OnInit {
             workSeconds: this.workSeconds,
             breakMinutes: this.breakMinutes,
             breakSeconds: this.breakSeconds,
+            minutes: this.minutes,
+            seconds: this.seconds,
+            timerActive: this.isTimerRunning,
+            isWorkInterval: this.isWorkInterval,
         };
 
         this.sendWebSocketMessage({
@@ -126,10 +143,7 @@ export class TimerComponent implements OnInit {
     }
 
     private sendWebSocketMessage(message: any): void {
-        console.log('sendWebSocketMessage');
-        console.log(this.socket$ && !this.socket$.closed);
         if (this.socket$ && !this.socket$.closed) {
-            console.log('sending:', message);
             this.socket$.next(message);
         }
     }
@@ -145,7 +159,7 @@ export class TimerComponent implements OnInit {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 }),
 
-                withCredentials: true, // Include CSRF cookie in the request
+                withCredentials: true,
             };
 
             if (csrfToken) {
@@ -161,9 +175,6 @@ export class TimerComponent implements OnInit {
                 )
                 .subscribe(
                     (response) => {
-                        // Handle the response if needed (e.g., show a success message)
-                        // Clear the input field after successful addition
-                        console.log(response);
                         if (response) {
                             this.setupWebSocket(userID, response.share_code);
                             if (response.is_host) {
@@ -181,7 +192,9 @@ export class TimerComponent implements OnInit {
                             this.seconds = response.pomodoro_timer.workSeconds;
                         }
                     },
-                    (error) => {}
+                    (error) => {
+                        console.error('Error check if in room:', error);
+                    }
                 );
         });
     }
@@ -249,9 +262,14 @@ export class TimerComponent implements OnInit {
     startTimer(): void {
         if (!this.isTimerRunning) {
             this.isTimerRunning = true;
+            this.sessionData.sessionType = this.isWorkInterval
+                ? 'study'
+                : 'break';
+            this.sessionData.startTime = new Date();
             this.timerInterval = setInterval(() => {
                 this.updateTimer();
             }, 1000);
+
             this.sendWebSocketMessage({ action: 'start' });
         }
     }
@@ -259,26 +277,86 @@ export class TimerComponent implements OnInit {
     pauseTimer(): void {
         if (this.isTimerRunning) {
             this.isTimerRunning = false;
+            this.sessionData.endTime = new Date();
             clearInterval(this.timerInterval);
             this.sendWebSocketMessage({ action: 'pause' });
         }
     }
 
     resetTimer(): void {
-        console.log('resetTimer');
         this.isTimerRunning = false;
+        this.sessionData.endTime = new Date();
+        this.saveSession(this.sessionData);
+        this.sessionData = {
+            userId: this.sessionData.userId,
+            sessionType: '',
+            startTime: new Date(),
+            endTime: new Date(),
+            sessionMinutes: 0,
+            sessionSeconds: 0,
+        };
         clearInterval(this.timerInterval);
         this.isWorkInterval = true;
         this.minutes = this.workMinutes;
-        this.seconds = 0;
+        this.seconds = this.workSeconds;
         this.titleService.setTitle('Todo');
         this.sendWebSocketMessage({ action: 'reset' });
+    }
+
+    saveSession(sessionData: ISession): void {
+        const csrfToken = this.getCookie('csrf-token');
+
+        this.authService.getUserDetails().subscribe((userDetails) => {
+            const userID = userDetails.id;
+
+            const body = { userID: userID, sessionData: sessionData };
+
+            const httpOptions = {
+                headers: new HttpHeaders({
+                    'Content-Type': 'application/json',
+                }),
+                withCredentials: true, // Include CSRF cookie in the request
+            };
+
+            if (csrfToken) {
+                httpOptions.headers = httpOptions.headers.append(
+                    'X-CSRFToken',
+                    csrfToken
+                );
+            }
+            if (
+                sessionData.sessionType == 'study' ||
+                sessionData.sessionType == 'break'
+            ) {
+                this.httpClient
+                    .post<any>(
+                        'http://localhost:8000/timer/save-session/',
+                        body,
+                        httpOptions
+                    )
+                    .subscribe({
+                        next: (response) => {},
+                        error: (error) => {
+                            console.error('Error adding Timer:', error);
+                        },
+                    });
+            }
+        });
+
+        this.sessionData = {
+            userId: this.sessionData.userId, // Retain the user ID
+            sessionType: '', // Reset the session type
+            startTime: new Date(),
+            endTime: new Date(),
+            sessionMinutes: 0,
+            sessionSeconds: 0,
+        };
     }
 
     updateTimer(): void {
         if (this.minutes == 0 && this.seconds == 0) {
             this.pauseTimer();
-
+            this.saveSession(this.sessionData);
             this.isWorkInterval = !this.isWorkInterval; // Toggle between work and break intervals
 
             if (this.isWorkInterval) {
@@ -294,6 +372,12 @@ export class TimerComponent implements OnInit {
                 this.seconds = 59;
             } else {
                 this.seconds--;
+            }
+            if (this.sessionData.sessionSeconds === 59) {
+                this.sessionData.sessionMinutes++;
+                this.sessionData.sessionSeconds = 0;
+            } else {
+                this.sessionData.sessionSeconds++;
             }
         }
         this.titleService.setTitle(
@@ -384,7 +468,6 @@ export class TimerComponent implements OnInit {
             breakMinutes: this.breakMinutes,
             breakSeconds: this.breakSeconds,
         };
-        console.log('timerData', timerData);
 
         this.authService.getUserDetails().subscribe((userDetails) => {
             const userID = userDetails.id;
@@ -470,8 +553,6 @@ export class TimerComponent implements OnInit {
                     (response) => {
                         // Handle the response if needed (e.g., show a success message)
                         // Clear the input field after successful addition
-                        console.log('generate share code');
-                        console.log(response);
                         navigator.clipboard.writeText(response.share_code);
                         this.shareCode = response.share_code;
                         this.setupWebSocket(userID, this.shareCode);
@@ -490,7 +571,6 @@ export class TimerComponent implements OnInit {
 
         this.authService.getUserDetails().subscribe((userDetails) => {
             const userID = userDetails.id;
-            console.log('share code: ' + this.shareCode);
 
             const body = new HttpParams()
                 .set('userID', userID)
@@ -518,11 +598,6 @@ export class TimerComponent implements OnInit {
                 )
                 .subscribe(
                     (response) => {
-                        // Handle the response if needed (e.g., show a success message)
-                        // Clear the input field after successful addition
-                        console.log(response);
-                        console.log(this.shareCode);
-                        // send message to websocket
                         this.setupWebSocket(userID, this.shareCode);
                         this.sendWebSocketMessage({
                             action: 'update',
@@ -530,7 +605,6 @@ export class TimerComponent implements OnInit {
                         });
                     },
                     (error) => {
-                        // Handle the error if the request fails
                         console.error('Error generate share code:', error);
                     }
                 );
@@ -565,9 +639,6 @@ export class TimerComponent implements OnInit {
                 )
                 .subscribe(
                     (response) => {
-                        // Handle the response if needed (e.g., show a success message)
-                        // Clear the input field after successful addition
-                        console.log(response);
                         if (response) {
                             this.socket$?.complete();
                             this.socket$ = undefined;

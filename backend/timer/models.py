@@ -12,13 +12,13 @@ class Pomodoro(models.Model):
     breakSeconds = models.IntegerField(default=0)
     autoStart = models.BooleanField(default=True)
 
-class Timer(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, default=None)
-    workMinutes = models.IntegerField()
-    workSeconds = models.IntegerField()
-    breakMinutes = models.IntegerField()
-    breakSeconds = models.IntegerField()
-
+class Session(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    session_type = models.CharField(max_length=10)
+    session_minutes = models.IntegerField(default=0)
+    session_seconds = models.IntegerField(default=0)
 
 class ShareCode(models.Model):
     code = models.CharField(max_length=6)

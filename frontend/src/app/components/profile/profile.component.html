@@ -2,15 +2,8 @@
     <app-header></app-header>
 
     <div class="container">
-        <div class="statistics">
-            <h2>Timer Statistics</h2>
-            <div *ngFor="let timer of timerData">
-                <div>
-                    <p>User ID: {{ timer.user }}</p>
-                    <p>Work Time: {{ timer.workMinutes }} minutes {{ timer.workSeconds }} seconds</p>
-                    <p>Break Time: {{ timer.breakMinutes }} minutes {{ timer.breakSeconds }} seconds</p>
-                </div>
-            </div>
+        <div class="chart-container">
+            <p-chart [type]="'bar'" [data]="chartData" [options]="options"></p-chart>
         </div>
     </div>
 </div>
