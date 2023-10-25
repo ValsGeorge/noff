@@ -344,8 +344,8 @@ export class TimerComponent implements OnInit {
         });
 
         this.sessionData = {
-            userId: this.sessionData.userId, // Retain the user ID
-            sessionType: '', // Reset the session type
+            userId: this.sessionData.userId,
+            sessionType: '',
             startTime: new Date(),
             endTime: new Date(),
             sessionMinutes: 0,

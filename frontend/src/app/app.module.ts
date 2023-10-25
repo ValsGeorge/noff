@@ -35,6 +35,7 @@ import { MessageService } from 'primeng/api';
 import { ConfirmationDialogComponent } from './components/confirmation-dialog/confirmation-dialog.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ChartModule } from 'primeng/chart';
+import { ConfirmEmailComponent } from './components/confirm-email/confirm-email.component';
 
 @NgModule({
     declarations: [
@@ -51,6 +52,7 @@ import { ChartModule } from 'primeng/chart';
         HomeComponent,
         ProfileComponent,
         ConfirmationDialogComponent,
+        ConfirmEmailComponent,
     ],
     imports: [
         BrowserModule,

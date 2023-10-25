@@ -2,7 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from 'src/app/services/auth.service';
 import { catchError, switchMap } from 'rxjs/operators';
-import { Tooltip } from 'chart.js/dist';
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { MessageService } from 'primeng/api';
+import { Router } from '@angular/router';
 interface SessionResponse {
     session_type: string;
     session_date: string;
@@ -84,13 +86,50 @@ export class ProfileComponent implements OnInit {
         },
     };
 
+    usernameForm: FormGroup;
+    emailForm: FormGroup;
+    passwordForm: FormGroup;
+
+    oldEmail: string = '';
+    isChangingEmail: boolean = false;
+
     constructor(
         private authService: AuthService,
-        private httpClient: HttpClient
-    ) {}
+        private httpClient: HttpClient,
+        private fb: FormBuilder,
+        private messageService: MessageService,
+        private router: Router
+    ) {
+        this.usernameForm = this.fb.group({
+            username: '',
+        });
+        this.emailForm = this.fb.group({
+            email: '',
+        });
+        this.passwordForm = this.fb.group({
+            oldPassword: '',
+            password: '',
+            confirmPassword: '',
+        });
+    }
+    // Inside your ProfileComponent class
+    activeTab: 'username' | 'email' | 'password' = 'username'; // Set the default tab
+
+    setActiveTab(tab: 'username' | 'email' | 'password') {
+        this.activeTab = tab;
+    }
 
     ngOnInit(): void {
         this.getSessionSummary();
+        this.authService.getUserDetails().subscribe((user) => {
+            this.usernameForm.setValue({
+                username: user.username || '',
+            });
+            this.emailForm.setValue({
+                email: user.email || '',
+            });
+            this.oldEmail = user.email;
+        });
     }
 
     private getCookie(title: string): string | null {
@@ -168,5 +207,75 @@ export class ProfileComponent implements OnInit {
                     ],
                 };
             });
+    }
+    updateUsername() {
+        const username = this.usernameForm.value.username;
+        this.authService.updateUsername(username).subscribe(
+            (response) => {
+                this.toastMessage('success', 'Success', response.success);
+            },
+            (error) => {
+                this.toastMessage('error', 'Error', error.error.error);
+            }
+        );
+    }
+    updateEmail() {
+        const email = this.emailForm.value.email;
+        if (email === this.oldEmail) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Your new email address is the same as your old email address.',
+            });
+        } else {
+            this.isChangingEmail = true;
+            this.authService.updateEmail(email).subscribe(
+                (response) => {
+                    this.isChangingEmail = false;
+                    this.toastMessage('success', 'Success', response.success);
+                },
+                (error) => {
+                    this.toastMessage('error', 'Error', error.error.error);
+                }
+            );
+        }
+    }
+    updatePassword() {
+        const oldPassword = this.passwordForm.value.oldPassword;
+        const password = this.passwordForm.value.password;
+        const confirmPassword = this.passwordForm.value.confirmPassword;
+        if (password !== confirmPassword) {
+            this.toastMessage(
+                'error',
+                'Error',
+                'Password and confirm password do not match'
+            );
+            this.passwordForm.reset();
+            return;
+        } else {
+            this.authService
+                .updatePassword(oldPassword, password, confirmPassword)
+                .subscribe(
+                    (response) => {
+                        this.toastMessage(
+                            'success',
+                            'Success',
+                            response.success
+                        );
+                    },
+                    (error) => {
+                        this.toastMessage('error', 'Error', error.error.error);
+                    }
+                );
+            this.passwordForm.reset();
+        }
+    }
+
+    toastMessage(type: string, error: string, message: string) {
+        this.messageService.add({
+            severity: type,
+            summary: error,
+            detail: message,
+        });
     }
 }

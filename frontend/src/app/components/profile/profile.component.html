@@ -2,8 +2,56 @@
     <app-header></app-header>
 
     <div class="container">
-        <div class="chart-container">
-            <p-chart [type]="'bar'" [data]="chartData" [options]="options"></p-chart>
+        <div class="settings">
+            <div class="tab-navigation">
+                <ul>
+                    <li [class.active]="activeTab === 'username'">
+                        <a (click)="setActiveTab('username')">Username</a>
+                    </li>
+                    <li [class.active]="activeTab === 'email'">
+                        <a (click)="setActiveTab('email')">Email</a>
+                    </li>
+                    <li [class.active]="activeTab === 'password'">
+                        <a (click)="setActiveTab('password')">Password</a>
+                    </li>
+                </ul>
+            </div>
+            <form [formGroup]="usernameForm" class="profile-form" *ngIf="activeTab === 'username'">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input formControlName="username" type="text" id="username" placeholder="Enter username" />
+                </div>
+                <button class="btn btn-primary" (click)="updateUsername()">Update</button>
+            </form>
+            <form [formGroup]="emailForm" class="profile-form" *ngIf="activeTab === 'email'">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input formControlName="email" type="text" id="email" placeholder="Enter email" />
+                </div>
+                <button class="btn btn-primary" [disabled]="isChangingEmail" (click)="updateEmail()">
+                    <span *ngIf="isChangingEmail" class="spinner-container">
+                        <mat-spinner [diameter]="30" color="primary"></mat-spinner>
+                    </span>
+                    <span *ngIf="!isChangingEmail">Update</span>
+                </button>
+            </form>
+            <form [formGroup]="passwordForm" class="profile-form" *ngIf="activeTab === 'password'">
+                <div class="form-group">
+                    <label for="oldPassword">Old Password</label>
+                    <input formControlName="oldPassword" type="password" id="oldPassword"
+                        placeholder="Enter old password" />
+                    <label for="password">Password</label>
+                    <input formControlName="password" type="password" id="password" placeholder="Enter password" />
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input formControlName="confirmPassword" type="password" id="confirmPassword"
+                        placeholder="Confirm password" />
+                </div>
+                <button class="btn btn-primary" (click)="updatePassword()">Update</button>
+            </form>
         </div>
+    </div>
+
+    <div class="chart-container">
+        <p-chart [type]="'bar'" [data]="chartData" [options]="options"></p-chart>
     </div>
 </div>

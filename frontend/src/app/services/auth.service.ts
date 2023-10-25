@@ -1,8 +1,8 @@
 // auth.service.ts
 
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, of, BehaviorSubject } from 'rxjs';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Observable, of, BehaviorSubject, throwError } from 'rxjs';
 import { tap, catchError, map } from 'rxjs/operators';
 import {
     CanActivate,
@@ -123,6 +123,16 @@ export class AuthService implements CanActivate {
         return this.http.post(url, {});
     }
 
+    confirmEmail(
+        uidb64: string,
+        token: string,
+        newEmail: string
+    ): Observable<any> {
+        const url = `${this.baseUrl}/confirm-email/${uidb64}/${token}/`;
+        const params = new HttpParams().set('email', newEmail);
+        return this.http.post(url, {}, { params });
+    }
+
     private getAuthTokenWithPrefix(): string {
         const token = this.getAuthToken();
         return token ? `Token ${token}` : '';
@@ -147,6 +157,76 @@ export class AuthService implements CanActivate {
                 // Clear the username in case of an error
                 this.usernameSubject.next('');
                 return of(error);
+            })
+        );
+    }
+    updateUsername(username: string): Observable<any> {
+        const token = this.getAuthToken();
+        if (!token) {
+            // If token is not available, return an empty observable
+            return of({});
+        }
+
+        const url = `${this.baseUrl}/update-username/`;
+        const body = { username };
+        const headers = new HttpHeaders({
+            Authorization: `Token ${token}`,
+        });
+
+        return this.http.put(url, body, { headers }).pipe(
+            tap((response: any) => {
+                this.usernameSubject.next(username);
+                return response;
+            }),
+            catchError((error) => {
+                return of(error);
+            })
+        );
+    }
+    updateEmail(email: string): Observable<any> {
+        const token = this.getAuthToken();
+        if (!token) {
+            // If token is not available, return an empty observable
+            return of({});
+        }
+
+        const url = `${this.baseUrl}/update-email/`;
+        const body = { email };
+        const headers = new HttpHeaders({
+            Authorization: `Token ${token}`,
+        });
+
+        return this.http.put(url, body, { headers }).pipe(
+            map((response: any) => {
+                return response;
+            }),
+            catchError((error) => {
+                return throwError(error);
+            })
+        );
+    }
+    updatePassword(
+        oldPassword: string,
+        password: string,
+        confirmPassword: string
+    ): Observable<any> {
+        const token = this.getAuthToken();
+        if (!token) {
+            return of({});
+        }
+
+        const url = `${this.baseUrl}/update-password/`;
+        const body = { oldPassword, password, confirmPassword };
+        const headers = new HttpHeaders({
+            Authorization: `Token ${token}`,
+        });
+
+        return this.http.put(url, body, { headers }).pipe(
+            map((response: any) => {
+                return response;
+            }),
+            catchError((error) => {
+                return throwError(error);
             })
         );
     }

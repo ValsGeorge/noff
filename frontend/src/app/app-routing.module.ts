@@ -7,6 +7,7 @@ import { TodoComponent } from './components/todo/todo.component';
 import { AccountActivationComponent } from './components/account-activation/account-activation.component';
 import { HomeComponent } from './components/home/home.component';
 import { ProfileComponent } from './components/profile/profile.component';
+import { ConfirmEmailComponent } from './components/confirm-email/confirm-email.component';
 import { AuthGuard } from './auth/auth.guard';
 
 const routes: Routes = [
@@ -21,6 +22,7 @@ const routes: Routes = [
     },
     { path: 'todo', component: TodoComponent, canActivate: [AuthGuard] },
     { path: 'activate/:uidb64/:token', component: AccountActivationComponent },
+    { path: 'confirm-email/:uidb64/:token', component: ConfirmEmailComponent },
 ];
 
 @NgModule({

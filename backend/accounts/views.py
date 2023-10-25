@@ -1,3 +1,5 @@
+import base64
+import json
 from django.utils import timezone  # Import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -108,21 +110,115 @@ def activate_account(request, uidb64, token):
         else:
             return Response({'error': 'Activation link is invalid or has expired1.'}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        print("Exception", e)
         return Response({'error': 'Activation link is invalid or has expired.'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def get_user_details(request):
-    print(request.user)
     user = request.user
-    print(user)
 
-    # Customize the user details you want to return
     user_details = {
         'username': user.username,
         'id': user.id,
+        'email': user.email,
     }
 
     return Response(user_details)
+
+@api_view(['PUT'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def update_username(request):
+    if request.method == 'PUT':
+        data = json.loads(request.body)
+        username = data.get('username')
+        user = request.user
+        user.username = username
+        user.save()
+        return Response({'success': 'Username updated successfully'}, status=status.HTTP_200_OK)
+    return Response({'error': 'Invalid request'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['PUT'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def update_email(request):
+    if request.method == 'PUT':
+        data = json.loads(request.body)
+        email = data.get('email')
+        if User.objects.filter(email=email).exists():
+            return Response({'error': 'Email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+        old_email = request.user.email
+        uid = urlsafe_base64_encode(force_bytes(request.user.pk))
+        token = generate_token.make_token(request.user)
+        encoded_email = base64.urlsafe_b64encode(email.encode()).decode()
+        email_subject = "Please verify your email address"
+        email_content = f"Hello {request.user.first_name},\n\n"
+        email_content += f"In order to change your email address, please click the following link to verify your email address:\n"
+        email_content += f"{settings.FRONTEND_BASE_URL}/confirm-email/{uid}/{token}/?email={encoded_email}"
+
+        send_mail(email_subject, email_content, settings.EMAIL_HOST_USER, [
+                  old_email], fail_silently=True)
+        
+        return Response({'success': 'Email updated successfully'}, status=status.HTTP_200_OK)
+    return Response({'error': 'Invalid request'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def confirm_email(request, uidb64, token):
+    try:
+        encoded_email = request.GET.get('email')
+        new_email = base64.urlsafe_b64decode(encoded_email.encode()).decode()
+        uid = urlsafe_base64_decode(uidb64)
+        user = User.objects.get(pk=uid)
+        if generate_token.check_token(user, token):
+            user.email = new_email            
+            user.save()
+            return Response({'success': 'Your email has been updated successfully'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'Activation link is invalid or has expired.'}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({'error': 'Activation link is invalid or has expired.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['PUT'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def update_password(request):
+    if request.method == 'PUT':
+        data = json.loads(request.body)
+        old_password = data.get('oldPassword')
+        password = data.get('password')
+        confirm_password = data.get('confirmPassword')
+        if old_password is None or password is None or confirm_password is None:
+            return Response({'error': 'Please provide all required fields'}, status=status.HTTP_400_BAD_REQUEST)
+        if password == old_password:
+            return Response({'error': 'New password cannot be the same as the old password'}, status=status.HTTP_400_BAD_REQUEST)
+        if password != confirm_password:
+            return Response({'error': 'Passwords do not match'}, status=status.HTTP_400_BAD_REQUEST)
+        if password_check(password) != '':
+            return Response({'error': password_check(password)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = authenticate(username=request.user.username, password=old_password)
+        except:
+            return Response({'error': 'Invalid old password'}, status=status.HTTP_400_BAD_REQUEST)
+        if user is None:
+            return Response({'error': 'Invalid old password'}, status=status.HTTP_400_BAD_REQUEST)
+        user.set_password(password)
+        user.save()
+        return Response({'success': 'Password updated successfully'}, status=status.HTTP_200_OK)
+    return Response({'error': 'Invalid request'}, status=status.HTTP_400_BAD_REQUEST)
+
+def password_check(password):
+    message = ''
+    if len(password) < 8:
+        message += 'Password must be at least 8 characters long.\n'
+    if not any(char.isdigit() for char in password):
+        message += 'Password must contain at least one digit.\n'
+    if not any(char.isupper() for char in password):
+        message += 'Password must contain at least one uppercase letter.\n'
+    if not any(char.islower() for char in password):
+        message += 'Password must contain at least one lowercase letter.\n'
+    return message

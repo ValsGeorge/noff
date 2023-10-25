@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
-import { Observable, catchError, of, switchMap } from 'rxjs';
+import { Observable } from 'rxjs';
 
 @Component({
     selector: 'app-header',
@@ -13,12 +13,19 @@ export class HeaderComponent {
     username: string = '';
 
     constructor(private authService: AuthService, private router: Router) {
-        this.isLoggedIn$ = this.authService.isLoggedIn$; // Subscribe to the isLoggedIn$ observable
+        this.isLoggedIn$ = this.authService.isLoggedIn$;
+
+        this.authService.username$.subscribe((username) => {
+            this.username = username;
+            console.log('HeaderComponent:', username);
+        });
     }
+
     ngOnInit(): void {
         this.authService.getUserDetails().subscribe((userDetails) => {
             this.username = userDetails.username;
-          });
+            console.log('ngOnInit:', userDetails);
+        });
     }
 
     logout() {
