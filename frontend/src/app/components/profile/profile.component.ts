@@ -112,8 +112,7 @@ export class ProfileComponent implements OnInit {
             confirmPassword: '',
         });
     }
-    // Inside your ProfileComponent class
-    activeTab: 'username' | 'email' | 'password' = 'username'; // Set the default tab
+    activeTab: 'username' | 'email' | 'password' = 'username';
 
     setActiveTab(tab: 'username' | 'email' | 'password') {
         this.activeTab = tab;

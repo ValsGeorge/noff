@@ -4,7 +4,6 @@
     border: none;
     outline: none;
     box-sizing: border-box;
-    font-family: "Poppins", sans-serif;
 }
 
 .body {
@@ -37,26 +36,45 @@
 }
 
 .container {
-    width: 25rem;
+    width: 36rem;
+    max-width: 90%;
+    margin: 0 auto;
     color: #fff;
-    background: rgba(0, 0, 0, 0.44);
-    padding: 20px 30px;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 30px;
     border-radius: 16px;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(7.4px);
-    -webkit-backdrop-filter: blur(7.4px);
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: 2px solid transparent;
+    box-shadow: 0 rgba(0, 0, 0, 0.3);
+    text-align: center;
+    transition: background 0.5s ease, border 0.5s ease, box-shadow 0.5s ease,
+        transform 0.5s ease;
+}
+
+.container:hover {
+    border: 2px solid #ed2ff0;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
+    transform: scale(1.05);
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.container h1 {
+    font-size: 32px;
+    margin-bottom: 20px;
+}
+
+.container p {
+    font-size: 18px;
+    margin-bottom: 20px;
 }
 
 .container a {
     width: 100%;
     height: 50px;
     border-radius: 25px;
-    border: 1px solid #ed2ff0;
     background: transparent;
-    color: #fff;
+    color: #ed2ff0;
     font-size: 18px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: 0.5s;
     margin: 10px 0;
@@ -65,5 +83,26 @@
 }
 
 .container a:hover {
-    border: 1px solid #22a8cd;
+    color: #22a8cd;
+}
+.container ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.container ul li {
+    margin-bottom: 10px;
+    padding-left: 20px;
+    position: relative;
+}
+
+.container ul li::before {
+    content: "\2022";
+    color: #ed2ff0;
+    font-weight: bold;
+    display: inline-block;
+    width: 1em;
+    margin-left: -1em;
+    position: absolute;
 }

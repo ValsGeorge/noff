@@ -17,14 +17,12 @@ export class HeaderComponent {
 
         this.authService.username$.subscribe((username) => {
             this.username = username;
-            console.log('HeaderComponent:', username);
         });
     }
 
     ngOnInit(): void {
         this.authService.getUserDetails().subscribe((userDetails) => {
             this.username = userDetails.username;
-            console.log('ngOnInit:', userDetails);
         });
     }
 
