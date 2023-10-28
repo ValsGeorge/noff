@@ -33,6 +33,7 @@ export class RegisterComponent {
             const registrationData = this.registrationForm.value;
             this.authService.register(registrationData).subscribe(
                 (response) => {
+                    console.log(response);
                     this.isRegistering = false;
                     this.messageService.add({
                         severity: 'success',
@@ -42,18 +43,23 @@ export class RegisterComponent {
                     this.messageService.add({
                         severity: 'info',
                         summary: 'Info',
-                        detail: 'Please check your email for account activation instructions',
+                        detail: 'Please check your email for account activation',
                     });
-                    console.log('Account created successfully:', response);
-                    this.router.navigate(['/']);
+                    this.router.navigate(['/login']);
                 },
                 (error) => {
+                    console.log(error);
+                    console.log(error.error);
+                    console.log(error.error);
                     this.isRegistering = false;
-                    this.messageService.add({
-                        severity: 'error',
-                        summary: 'Error',
-                        detail: 'Error while creating account',
-                    });
+                    for (const [key, value] of Object.entries(error.error)) {
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: `Error: ${key}`,
+                            detail: `${value}`,
+                        });
+                    }
+
                     this.router.navigate(['/register']);
                 }
             );

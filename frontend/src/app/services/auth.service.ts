@@ -70,7 +70,16 @@ export class AuthService implements CanActivate {
         const headers = { 'Content-Type': 'application/json' };
         const body = JSON.stringify(userData);
 
-        return this.http.post(url, body, { headers });
+        return this.http.post(url, body, { headers }).pipe(
+            tap((response: any) => {
+                console.log(response);
+                return response;
+            }),
+            catchError((error) => {
+                console.log(error);
+                return throwError(() => error);
+            })
+        );
     }
 
     login(loginData: any): Observable<any> {
@@ -81,17 +90,17 @@ export class AuthService implements CanActivate {
                 this.usernameSubject.next(response.username);
                 const token = response.token;
                 this.setAuthTokenInLocalStorage(token);
+                return response;
             }),
             catchError((error) => {
                 this.isLoggedInValue = false;
                 this.clearLocalStorage();
-                return of(error);
+                return throwError(() => error);
             })
         );
     }
 
     logout(): void {
-        console.log('Logout');
         // Clear the authentication token, username, and user ID from localStorage
         this.clearLocalStorage();
 
@@ -131,11 +140,6 @@ export class AuthService implements CanActivate {
         const url = `${this.baseUrl}/confirm-email/${uidb64}/${token}/`;
         const params = new HttpParams().set('email', newEmail);
         return this.http.post(url, {}, { params });
-    }
-
-    private getAuthTokenWithPrefix(): string {
-        const token = this.getAuthToken();
-        return token ? `Token ${token}` : '';
     }
 
     getUserDetails(): Observable<any> {

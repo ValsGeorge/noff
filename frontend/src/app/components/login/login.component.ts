@@ -31,21 +31,16 @@ export class LoginComponent {
             const loginData = this.loginForm.value;
             this.authService.login(loginData).subscribe(
                 (response) => {
-                    // Redirect to the home page immediately
                     this.router.navigate(['/']);
-
-                    // Set a timeout to display the toast after the redirection
-                    this.messageService.add({
-                        severity: 'success',
-                        summary: 'Success',
-                        detail: 'Connected successfully',
-                    });
+                    this.toastMessage('success', 'Success', response.success);
                 },
                 (error) => {
-                    console.log('Error while logging in user', error);
-                    // Handle login error
+                    this.toastMessage('error', 'Error', error.error.error);
                 }
             );
         }
+    }
+    toastMessage(severity: string, summary: string, detail: string) {
+        this.messageService.add({ severity, summary, detail });
     }
 }

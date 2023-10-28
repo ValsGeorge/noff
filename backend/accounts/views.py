@@ -26,16 +26,32 @@ def register(request):
         username = request.data.get('username')
         email = request.data.get('email')
         password = request.data.get('password')
+        errors = {}
 
         if username is None or email is None or password is None:
-            return Response({'error': 'Please provide all required fields'}, status=status.HTTP_400_BAD_REQUEST)
+            errors['error'] = 'Please provide all required fields\n'
 
         if User.objects.filter(username=username).exists():
-            return Response({'error': 'Username already exists'}, status=status.HTTP_400_BAD_REQUEST)
+            errors['username'] = 'Username already exists\n'
 
         if User.objects.filter(email=email).exists():
-            return Response({'error': 'Email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+            errors['email'] = 'Email already exists\n'
+        
+        if password_check(password) != '':
+            errors['password'] = password_check(password)
+        
+        if len(username) < 4:
+            errors['username'] = 'Username must be at least 4 characters long\n'
+        
+        if len(username) > 20:
+            errors['username'] = 'Username must be at most 20 characters long\n'
+        
+        if not validate_email(email):
+            errors['email'] = 'Invalid email\n'
 
+        if errors:
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        
         user = User(username=username, email=email)
         user.set_password(password)
         user.is_active = False
@@ -80,6 +96,7 @@ def login(request):
 
         if username is None or password is None:
             return Response({'error': 'Please provide all required fields'}, status=status.HTTP_400_BAD_REQUEST)
+
 
         user = authenticate(username=username, password=password)
         if user is not None:
@@ -222,3 +239,12 @@ def password_check(password):
     if not any(char.islower() for char in password):
         message += 'Password must contain at least one lowercase letter.\n'
     return message
+
+def validate_email(email):
+    from django.core.validators import validate_email
+    from django.core.exceptions import ValidationError
+    try:
+        validate_email(email)
+        return True
+    except ValidationError:
+        return False
