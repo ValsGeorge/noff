@@ -1,7 +1,6 @@
 # Noff
-
 ## Description
-Noff is a full stack application that merges a dynamic todo list with an intuitive pomodoro timer, fostering efficient task management and enhanced productivity. The platform allows users to create, organize, and share tasks while leveraging a customizable pomodoro timer for focused work sessions.
+Noff is a full stack application that merges a dynamic todo list with an intuitive pomodoro timer, fostering efficient task management and enhanced productivity. The platform allows users to create, organize tasks while leveraging a customizable pomodoro timer that can be shared with other users for focused work sessions.
 
 ## Technologies Used
 - **Frontend**: Angular
@@ -36,3 +35,6 @@ Noff is a full stack application that merges a dynamic todo list with an intuiti
 ![Profile View](/images/profile.png)
 ![Login View](/images/login.png)
 ![Register View](/images/register.png)
+
+> ## About Noff
+> This application was developed to showcase my proficiency in creating a full-stack application using Angular and Django, integrating a dynamic todo list with a Pomodoro timer for enhanced productivity. Please note that Noff is still in active development and primarily used for personal purposes. It may contain incomplete features or require further improvements. Kindly consider it a work-in-progress project.
