@@ -153,11 +153,20 @@ export class TodoComponent {
                 csrfToken
             );
         }
-        this.httpClient.put<any>(
-            `http://localhost:8000/category/update-category-orders/`,
-            categories,
-            httpOptions
-        );
+        this.httpClient
+            .put<any>(
+                `http://localhost:8000/category/update-category-orders/`,
+                categories,
+                httpOptions
+            )
+            .subscribe({
+                next: (response) => {
+                    // Category orders updated successfully
+                },
+                error: (error) => {
+                    console.error('Error updating category orders:', error);
+                },
+            });
     }
 
     private getCookie(title: string): string | null {

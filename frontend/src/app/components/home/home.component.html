@@ -1,6 +1,6 @@
 <div class="body">
   <app-header></app-header>
-  <div class="container">
+  <div *ngIf="isConnected === false" class="container">
     <h1>Welcome to Noff</h1>
     <p>Unlock your full potential with Noff, the ultimate study partner. With Noff, you can:</p>
     <ul>

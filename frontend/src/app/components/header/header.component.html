@@ -1,14 +1,9 @@
 <mat-toolbar class="custom-navbar">
-  <!-- Display the logo on the left -->
   <a class="logo" routerLink="/">Noff</a>
 
-  <!-- Spacer to push elements to the right -->
   <span class="spacer"></span>
 
-  <!-- Display navigation links -->
   <nav class="nav-links">
-    <a routerLink="/">Home</a>
-
     <!-- Display user info if user is logged in -->
     <span *ngIf="isLoggedIn$ | async" class="user-info">
       <a routerLink="/todo">Todo</a>

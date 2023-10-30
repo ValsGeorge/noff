@@ -5,6 +5,7 @@ import { catchError, switchMap } from 'rxjs/operators';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { Router } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 interface SessionResponse {
     session_type: string;
     session_date: string;
@@ -68,6 +69,7 @@ export class ProfileComponent implements OnInit {
                 },
                 ticks: {
                     color: 'white',
+                    stepSize: 30 * 60,
                     callback: (value: number) => {
                         const minutes = Math.floor(value / 60);
                         const seconds = value % 60;
@@ -98,8 +100,10 @@ export class ProfileComponent implements OnInit {
         private httpClient: HttpClient,
         private fb: FormBuilder,
         private messageService: MessageService,
-        private router: Router
+        private router: Router,
+        private titleService: Title
     ) {
+        this.titleService.setTitle('Profile');
         this.usernameForm = this.fb.group({
             username: '',
         });

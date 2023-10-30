@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { Title } from '@angular/platform-browser';
 
 @Component({
     selector: 'app-login',
@@ -16,10 +17,12 @@ export class LoginComponent {
 
     constructor(
         private fb: FormBuilder,
+        private titleService: Title,
         private authService: AuthService,
         private router: Router,
         private messageService: MessageService
     ) {
+        this.titleService.setTitle('Login');
         this.loginForm = this.fb.group({
             username: ['', Validators.required],
             password: ['', Validators.required],
